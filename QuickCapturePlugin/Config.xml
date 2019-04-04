@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ESRI.Configuration xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
+  <Name>QuickCapture Errors Plugin Datasource</Name>
+  <AddInID>{700BEFCE-B06B-494C-BC33-2E8CE1B2A826}</AddInID>
+  <Description>QuickCapture Error Review Plugin</Description>
+  <Version>1.0</Version>
+  <Author>APL</Author>
+  <Company>Esri</Company>
+  <Date>3/25/2019</Date>
+  <Targets>
+    <Target name="ArcGISPro" version="2.3" />
+  </Targets>
+  <!-- CLR should be set to the $targetframeworkversion$ set in the .csproj -->
+  <AddIn language="CLR4.6.1" library="QuickCapturePlugin.dll" namespace="QuickCapturePlugin">
+    <ArcGISPro>
+      <PluginDatasources>
+        <PluginDatasource id="QuickCapturePlugin_Datasource" class="ProPluginDatasourceTemplate" />
+      </PluginDatasources>
+    </ArcGISPro>
+  </AddIn>
+</ESRI.Configuration>
