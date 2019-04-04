@@ -40,15 +40,15 @@
       <groups>
         <!-- comment this out if you have no controls on the Addin tab to avoid
               an empty group-->
-        <group id="SimplePointPluginTest_Group1" caption="QuickCapture Error Review" appearsOnAddInTab="true">
+        <group id="QuickCaptureAddIn_Group1" caption="QuickCapture Error Review" appearsOnAddInTab="true">
           <!-- host controls within groups -->
-          <button refID="SimplePointPluginTest_TestCsv1" size="large" />
+          <button refID="QuickCapture_browse" size="large" />
           <!--<button refID="SimplePointPluginTest_TestCsv2" size="large" />-->
         </group>
       </groups>
       <controls>
         <!-- add your controls here -->
-        <button id="SimplePointPluginTest_TestCsv1" caption="Review SQLite Data" className="TestCsv1" loadOnClick="true" smallImage="Images\GenericButtonBlue16.png" largeImage="Images\GenericButtonBlue32.png">
+        <button id="QuickCapture_browse" caption="Review SQLite Data" className="BrowseForZip" loadOnClick="true" smallImage="Images\GenericButtonBlue16.png" largeImage="Images\GenericButtonBlue32.png">
           <tooltip heading="Tooltip Heading">
             Open a QuickCapture SQLite error database and review the feature data.<disabledText /></tooltip>
         </button>

@@ -64,7 +64,7 @@ namespace QuickCapturePluginTest {
 				//NativeMethods.SetDllDirectory(path);
 
         return _this ?? (_this = (Module1)FrameworkApplication.FindModule("QuickCapturePlugin_Module"));
-			}
+	  }
     }
 
 		//private static class NativeMethods {
