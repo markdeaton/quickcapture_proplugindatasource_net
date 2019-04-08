@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ArcGIS defaultAssembly="QuickCaptureSqliteDBCustomItem.dll" defaultNamespace="QuickCaptureSqliteDBCustomItem" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
+  <AddInInfo id="{1daf41c5-b083-4c9a-a515-4cb276a93c74}" version="1.0" desktopVersion="2.4.19257">
+    <Name>QuickCaptureSqliteDBCustomItem</Name>
+    <Description>QuickCaptureSqliteDBCustomItem description</Description>
+    <Image>Images\AddinDesktop32.png</Image>
+    <Author>mark4238</Author>
+    <Company>Esri APL</Company>
+    <Date>4/5/2019 2:20:21 PM, 2019</Date>
+    <Subject>Framework</Subject>
+    <!-- Note subject can be one or more of these topics:
+                    Content, Framework, Editing, Geodatabase, Geometry, Geoprocessing, Layouts, Map Authoring, Map Exploration -->
+  </AddInInfo>
+  <categories>
+    <!-- this is the custom project item container-->
+    <!--<updateCategory refID="esri_core_projectContainers">
+      <insertComponent id="QuakeItem_FolderContainer" className="QuakeItem.Items.QuakeProjectItemContainer" insert="before" placeWith="esri_geodatabase_folderConnectionContainer">
+        <content type="QuakeContainer" displayName="Earthquakes" contextMenu="QuakeItems_AddFoldersMenu" />
+      </insertComponent>
+    </updateCategory>-->
+    <!-- this is the custom (project) item-->
+    <!-- Custom items also get registered in 
+    C:\Users\<user name>\AppData\Local\ESRI\SearchResources\ItemInfoTypesExt.json for the indexer 
+    when Pro is started. It is advisable to delete this file in-between sessions when you are 
+    developing your custom item and refactoring your code, etc.-->
+    <updateCategory refID="esri_customItems">
+      <insertComponent id="quickcapture_sqlite_handler" className="QuickCaptureSqliteDBCustomItem.Items.QuickCaptureDBItem" containerType="QuickCaptureContainer">
+        <content displayName="QuickCapture Errors" fileExtension="sqliteqc" isContainer="true" keywords="quickcapture" />
+      </insertComponent>
+      
+    </updateCategory>
+  </categories>
+  <modules>
+    <insertModule id="QuickCaptureSqliteDBCustomItem_Module" className="Module1" autoLoad="false" caption="Module1">
+      <!-- uncomment to have the control hosted on a separate tab-->
+      <tabs>
+        <!--<tab id="QuickCaptureSqliteDBCustomItem_Tab1" caption="New Tab">
+          <group refID="QuickCaptureSqliteDBCustomItem_Group1"/>
+        </tab>-->
+      </tabs>
+      <groups>
+        <!-- comment this out if you have no controls on the Addin tab to avoid
+              an empty group-->
+        <!--<group id="QuickCaptureSqliteDBCustomItem_Group1" caption="Group 1" appearsOnAddInTab="true">
+          -->
+        <!-- host controls within groups -->
+        <!--
+        </group>-->
+        <!--<group id="QuickCaptureSqliteDBCustomItem_Group1" caption="Group 1" appearsOnAddInTab="true">
+          <button refID="QuickCaptureSqliteDBCustomItem_AddQuickCaptureTableToMap" size="large" />
+        </group>-->
+      </groups>
+      <controls>
+        <!-- add your controls here -->
+        <button id="QuickCaptureSqliteDBCustomItem_AddQuickCaptureTableToMap" caption="Add To Map" className="QuickCaptureSqliteDBCustomItem.Buttons.AddQuickCaptureTableToMap" loadOnClick="true" smallImage="pack://application:,,,/ArcGIS.Desktop.Resources;component/Images/GenericAdd16.png" largeImage="pack://application:,,,/ArcGIS.Desktop.Resources;component/Images/GenericAdd32.png">
+          <tooltip>Add this QuickCapture feature layer to the map.<disabledText /></tooltip>
+        </button>
+      </controls>
+      <menus>
+        <menu id="QuickCaptureSqliteDBCustomItem_ContextMenu" caption="Menu1">
+          <button refID="QuickCaptureSqliteDBCustomItem_AddQuickCaptureTableToMap" />
+        </menu>
+      </menus>
+    </insertModule>
+  </modules>
+</ArcGIS>

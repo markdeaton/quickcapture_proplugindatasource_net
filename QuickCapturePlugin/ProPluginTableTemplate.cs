@@ -37,6 +37,8 @@ namespace QuickCapturePlugin {
 		PluginRow FindRow(int oid, IEnumerable<string> columnFilter, SpatialReference sr);
 	}
 
+	// TODO Assumption: it's okay that any item added to Pro is in a temp location and won't be there if the Pro document is saved and later reopened
+
 	/// <summary>
 	/// Implements a plugin table.
 	/// </summary>

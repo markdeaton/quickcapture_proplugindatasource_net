@@ -5,7 +5,9 @@ VisualStudioVersion = 15.0.28307.168
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCapturePluginTest", "QuickCapturePluginTest.csproj", "{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCapturePlugin", "QuickCApturePlugin\QuickCapturePlugin.csproj", "{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCapturePlugin", "QuickCapturePlugin\QuickCapturePlugin.csproj", "{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCaptureSqliteDBCustomItem", "QuickCaptureSqliteDBCustomItem\QuickCaptureSqliteDBCustomItem.csproj", "{1DAF41C5-B083-4C9A-A515-4CB276A93C74}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +33,14 @@ Global
 		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Release|x64.ActiveCfg = Release|x64
 		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Release|x64.Build.0 = Release|x64
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Debug|x64.ActiveCfg = Debug|x64
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Debug|x64.Build.0 = Debug|x64
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Release|x64.ActiveCfg = Release|Any CPU
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
