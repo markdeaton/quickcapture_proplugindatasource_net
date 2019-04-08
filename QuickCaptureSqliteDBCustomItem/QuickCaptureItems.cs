@@ -140,7 +140,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 	/// QuickCapture virtual tables (each is a feature service). These are children of a QuickCaptureDBItem
 	/// </summary>
 	/// <remarks>QuickCaptureVirtualTables are, themselves, custom items</remarks>
-	internal class QuickCaptureVirtualTable : CustomItemBase, IDisposable {
+	internal class QuickCaptureVirtualTable : CustomItemBase/*, IDisposable*/ {
 		private ImageSource largeIcon = null, smallIcon = null;
 
 		public QuickCaptureVirtualTable(string name, string path, string type, string lastModifiedTime, PluginDatastore pluginws) : base(name, path, type, lastModifiedTime) {
@@ -180,35 +180,35 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 		private PluginDatastore _pluginDs = null;
 		public PluginDatastore PluginDS { get => _pluginDs; }
 
-		#region IDisposable Support
-		private bool disposedValue = false; // To detect redundant calls
+		//#region IDisposable Support
+		//private bool disposedValue = false; // To detect redundant calls
 
-		protected virtual void Dispose(bool disposing) {
-			if (!disposedValue) {
-				if (disposing) {
-					_pluginDs.Dispose();
-				}
+		//protected virtual void Dispose(bool disposing) {
+		//	if (!disposedValue) {
+		//		if (disposing) {
+		//			_pluginDs.Dispose();
+		//		}
 
-				// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-				// TODO: set large fields to null.
+		//		// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+		//		// TODO: set large fields to null.
 
-				disposedValue = true;
-			}
-		}
+		//		disposedValue = true;
+		//	}
+		//}
 
-		// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-		// ~QuickCaptureVirtualTable() {
-		//   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-		//   Dispose(false);
-		// }
+		//// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+		//// ~QuickCaptureVirtualTable() {
+		////   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+		////   Dispose(false);
+		//// }
 
-		// This code added to correctly implement the disposable pattern.
-		public void Dispose() {
-			// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-			Dispose(true);
-			// TODO: uncomment the following line if the finalizer is overridden above.
-			// GC.SuppressFinalize(this);
-		}
-		#endregion
+		//// This code added to correctly implement the disposable pattern.
+		//public void Dispose() {
+		//	// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+		//	Dispose(true);
+		//	// TODO: uncomment the following line if the finalizer is overridden above.
+		//	// GC.SuppressFinalize(this);
+		//}
+		//#endregion
 	}
 }
