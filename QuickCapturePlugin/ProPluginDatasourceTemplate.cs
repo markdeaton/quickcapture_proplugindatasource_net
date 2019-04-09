@@ -114,7 +114,7 @@ namespace QuickCapturePlugin {
 			// Otherwise there's at least a partial VirtualTableInfo record there
 			if (_tables[name].Table == null) {
 				// TODO Assumption: all features are WGS84
-				_tables[name].Table = new ProPluginTableTemplate(_dbConn, name, _tables[name].FeatSvcUrl, SpatialReferences.WGS84);
+				_tables[name].Table = new ProPluginTableTemplate(_dbConn, name, _tables[name].FeatSvcUrl, null /*SpatialReferences.WGS84*/);
 			}
 			return _tables[name].Table;
 		}
@@ -132,7 +132,9 @@ namespace QuickCapturePlugin {
 				// TODO Assumption: Layer URL will always follow the format ".../<lyrname>/FeatureServer/#"
 				using (SQLiteCommand cmd = _dbConn.CreateCommand()) {
 					cmd.CommandText = $"SELECT DISTINCT {Properties.Settings.Default.FieldName_FeatureSvcLayer}" +
-									  $" FROM {Properties.Settings.Default.TableName_Features}";
+									  $", MAX({Properties.Settings.Default.FieldName_Timestamp})" +
+									  $" FROM {Properties.Settings.Default.TableName_Features}" +
+									  $" GROUP BY {Properties.Settings.Default.FieldName_FeatureSvcLayer}";
 					SQLiteDataReader reader = cmd.ExecuteReader();
 					while (reader.Read()) {
 						string sLyrUrl = reader[0].ToString();

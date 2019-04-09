@@ -145,7 +145,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 		public QuickCaptureVirtualTable(string name, string path, string type, string lastModifiedTime, PluginDatastore pluginws) : base(name, path, type, lastModifiedTime) {
 			this.DisplayType = "QuickCapture Virtual Table";
 			this.ContextMenuID = "QuickCaptureSqliteDBCustomItem_ContextMenu";
-			this._pluginDs = pluginws;
+			this._pluginDS = pluginws;
 		}
 
 
@@ -161,7 +161,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 				return largeIcon;
 			}
 		}
-
+		
 		public override Task<ImageSource> SmallImage {
 			get {
 				if (smallIcon == null) {
@@ -176,8 +176,8 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 		}
 
 		public string TableName { get => this.Name; }
-		private PluginDatastore _pluginDs = null;
-		public PluginDatastore PluginDS { get => _pluginDs; }
+		private PluginDatastore _pluginDS = null;
+		public PluginDatastore PluginDS { get => _pluginDS; }
 
 		//#region IDisposable Support
 		//private bool disposedValue = false; // To detect redundant calls
