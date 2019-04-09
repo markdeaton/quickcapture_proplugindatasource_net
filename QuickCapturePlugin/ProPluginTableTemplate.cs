@@ -297,9 +297,6 @@ namespace QuickCapturePlugin {
 			_extent = _sr_extent;
 		}
 
-		//const int SQLITE_FIELD_OID = 0; const int SQLITE_FIELD_Feature = 1;
-		//const int SQLITE_FIELD_FeatureId = 2; const int SQLITE_FIELD_Timestamp = 3;
-		// TODO Make this functionality available through Pro catalog
 		// TODO Assumption: timestamps are in 1970 epoch milliseconds, UTC
 		private readonly DateTime EPOCH_START = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 		private void Open() {
@@ -426,84 +423,6 @@ namespace QuickCapturePlugin {
 			// If we've gotten here, the JSON should have a point, polyline, or polygon geometry
 			Geometry geom = GeometryEngine.Instance.ImportFromJSON(JSONImportFlags.jsonImportDefaults, sGeom);
 			return geom;
-
-			//while (!parser.EndOfData)
-			//{
-			//  var values = parser.ReadFields();
-
-			//  if (!haveDeterminedSpatialData)
-			//  {
-			//    if (values.Count() >= 2)
-			//    {
-			//      double test = 0;
-			//      if (Double.TryParse(values[0], out test))
-			//      {
-			//        hasSpatialData = Double.TryParse(values[1], out test);
-			//        if (hasSpatialData)
-			//        {
-			//          //add a shape column
-			//          _table.Columns.Add(new DataColumn("SHAPE", typeof(System.Byte[])));
-			//          //do we have a Z?
-			//          double z = 0;
-			//          _hasZ = false;
-			//          if (values.Count() >= 3)
-			//          {
-			//            _hasZ = Double.TryParse(values[2], out z);
-			//          }
-			//        }
-			//      }
-			//    }
-			//    haveDeterminedSpatialData = true;
-			//  }
-
-			//  //load the datatable
-			//  var row = _table.NewRow();
-			//  for (int c = 0; c < values.Length; c++)
-			//  {
-			//    //TODO Deal with nulls!!
-			//    row[c + 1] = values[c] ?? "";//Column "0" is our objectid
-			//  }
-
-			//  if (hasSpatialData)
-			//  {
-			//    double x = 0, y = 0, z = 0;
-			//    //TODO Deal with nulls!
-			//    Double.TryParse(values[0], out x);
-			//    Double.TryParse(values[1], out y);
-
-			//    //do we have a Z?
-			//    if (_hasZ)
-			//    {
-			//      //TODO Deal with nulls!
-			//      Double.TryParse(values[2], out z);
-			//    }
-
-			//    //ensure the coordinate is within bounds
-			//    var coord = new Coordinate3D(x, y, z);
-			//    if (!sr_extent.Contains2D(coord))
-			//      throw new ArcGIS.Core.Data.GeodatabaseFeatureException(
-			//        "The feature falls outside the defined spatial reference");
-
-			//    //store it
-			//    row["SHAPE"] = coord.ToMapPoint().ToEsriShape();
-
-			//    //add it to the index
-			//    var rbushCoord = new RBushCoord3D(coord, (int)row["OBJECTID"]);
-			//    _rtree.Insert(rbushCoord);
-
-			//    //update max and min for use in the extent
-			//    if (_rtree.Count == 1)
-			//    {
-			//      //first record
-			//      _extent = rbushCoord.Envelope;
-			//    }
-			//    else
-			//    {
-			//      _extent = rbushCoord.Envelope.Union2D(_extent);
-			//    }
-			//  }
-			//  _table.Rows.Add(row);
-			//}
 		}
 
 		private PluginCursorTemplate SearchInternal(QueryFilter qf) {

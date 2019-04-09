@@ -57,7 +57,7 @@
         </button>
       </controls>
       <menus>
-        <menu id="QuickCaptureSqliteDBCustomItem_ContextMenu" caption="Menu1">
+        <menu id="QuickCaptureSqliteDBCustomItem_ContextMenu" caption="Add QuickCapture Table">
           <button refID="QuickCaptureSqliteDBCustomItem_AddQuickCaptureTableToMap" />
         </menu>
       </menus>

@@ -19,6 +19,7 @@ namespace QuickCaptureSqliteDBCustomItem.Buttons {
 				foreach (QuickCaptureVirtualTable item in vts) {
 					if (item != null) {
 						try {
+							// TODO Assumption: QuickCapture errors will only have features, not table-only data
 							Table table = item.PluginDS.OpenTable(item.TableName);
 							LayerFactory.Instance.CreateFeatureLayer((FeatureClass)table, MapView.Active.Map);
 						} catch (Exception e) {

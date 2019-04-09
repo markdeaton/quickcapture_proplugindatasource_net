@@ -26,9 +26,6 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-// TODO Pro catalog integration
-// TODO Extract files from zip to temp directory
-
 namespace QuickCapturePlugin {
     /// <summary>
     /// Implements a custom plugin datasource for reading Sqlite database tables and feature classes
@@ -131,7 +128,7 @@ namespace QuickCapturePlugin {
 			if (_tables.Count <= 0) {
 				List<string> tableNames = new List<string>();
 				// TODO Assumption: Feature data is always found in a table named "Features".
-				// TODO Assumption: each feature's Layer URL will be its virtual table
+				// TODO Assumption: each feature's Layer URL will be its virtual table name
 				// TODO Assumption: Layer URL will always follow the format ".../<lyrname>/FeatureServer/#"
 				using (SQLiteCommand cmd = _dbConn.CreateCommand()) {
 					cmd.CommandText = $"SELECT DISTINCT {Properties.Settings.Default.FieldName_FeatureSvcLayer}" +

@@ -82,14 +82,13 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 		/// expanded in the Catalog pane for the first time.
 		/// </summary>
 		/// <remarks>The project item should instantiate items for each of its children and
-		/// add them to its child collection (see <b>AddRangeToChildren</b>)</remarks>
-		public override void Fetch() {
-			Parse();
-		}
-
-		private async void Parse() {
+		/// add them to its child collection (see <b>AddRangeToChildren</b>).
+		/// In this case, we unzip the archive and read the tables (feature service URLs)
+		/// from the Errors.sqlite database.</remarks>
+		public async override void Fetch() {
 			//This is where the QuickCapture item is located
 			string filePath = this.Path;
+			string tempDBPath = null;
 
 			IReadOnlyList<string> tables = new List<string>();
 			List<QuickCaptureVirtualTable> events = new List<QuickCaptureVirtualTable>();
@@ -109,11 +108,11 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 					ZipFile.ExtractToDirectory(filePath, tempDir);
 
 					// Sqlite database path
-					string db_path = System.IO.Path.Combine(tempDir, "Errors.sqlite");
+					tempDBPath = System.IO.Path.Combine(tempDir, "Errors.sqlite");
 
 					pluginws = new PluginDatastore(
 						 new PluginDatasourceConnectionPath("QuickCapturePlugin_Datasource",
-							   new Uri(db_path, UriKind.Absolute)));
+							   new Uri(tempDBPath, UriKind.Absolute)));
 					System.Diagnostics.Debug.Write("==========================\r\n");
 
 					tables = pluginws.GetTableNames().ToList();
@@ -125,8 +124,8 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 			}, ps.Progressor);
 
 			foreach (string table in tables) {
-				// TODO Assumption: it's okay to have a null timestamp for these catalog items
-				QuickCaptureVirtualTable vTbl = new QuickCaptureVirtualTable(table, $"{filePath}->{table}", "QuickCapture_VirtualTable", null, pluginws);
+				// TODO Assumption: it's okay to have a null timestamp for catalog items
+				QuickCaptureVirtualTable vTbl = new QuickCaptureVirtualTable(table, $"{tempDBPath}[{table}]", "QuickCapture_VirtualTable", null, pluginws);
 				events.Add(vTbl);
 			}
 
