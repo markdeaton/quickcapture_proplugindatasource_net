@@ -19,7 +19,7 @@
 using ArcGIS.Desktop.Framework;
 using System.Runtime.InteropServices;
 
-namespace QuickCapturePluginTest {
+namespace QuickCaptureAddInBrowseButton {
 	/// <summary>
 	/// QuickCapturePluginTest implements a custom plugin datasource for reading csv files.  
 	/// QuickCapturePluginTest is an add-in that allows access to error data stored in a SQLite database.  

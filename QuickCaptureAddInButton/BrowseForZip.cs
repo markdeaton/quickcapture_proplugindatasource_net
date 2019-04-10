@@ -29,7 +29,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Windows;
 
-namespace QuickCapturePluginTest {
+namespace QuickCaptureAddInBrowseButton {
     /// <summary>
     /// Example of accessing a Plugin Workspace via the ArcGIS.Core.Data API
     /// </summary>

@@ -17,12 +17,12 @@
    limitations under the License.
 
 -->
-<ArcGIS defaultAssembly="QuickCapturePluginTest.dll" defaultNamespace="QuickCapturePluginTest" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
+<ArcGIS defaultAssembly="QuickCaptureAddInBrowseButton.dll" defaultNamespace="QuickCaptureAddInBrowseButton" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
   <AddInInfo id="{700BEFCE-B06B-494C-BC33-2E8CE1B2A826}" version="1.0" desktopVersion="2.3">
     <Name>QuickCapturePluginTest</Name>
     <Description>QuickCapturePluginTest description</Description>
     <Image>Images\AddinDesktop32.png</Image>
-    <Author>ArcGIS Pro SDK Team, arcgisprosdk@esri.com</Author>
+    <Author>Esri APL</Author>
     <Company>esri, http://www.esri.com</Company>
     <Date>11/29/2018 11:23:51 AM, 2018</Date>
     <Subject>Geodatabase</Subject>
@@ -49,7 +49,7 @@
       <controls>
         <!-- add your controls here -->
         <button id="QuickCapture_browse" caption="Review SQLite Data" className="BrowseForZip" loadOnClick="true" smallImage="Images\GenericButtonBlue16.png" largeImage="Images\GenericButtonBlue32.png">
-          <tooltip heading="Tooltip Heading">
+          <tooltip>
             Open a QuickCapture SQLite error database and review the feature data.<disabledText /></tooltip>
         </button>
         <!--<button id="SimplePointPluginTest_TestCsv2" caption="Add Plugin Data to Map" className="TestCsv2" loadOnClick="true" smallImage="pack://application:,,,/ArcGIS.Desktop.Resources;component/Images/GenericButtonBlue16.png" largeImage="pack://application:,,,/ArcGIS.Desktop.Resources;component/Images/GenericButtonBlue32.png">

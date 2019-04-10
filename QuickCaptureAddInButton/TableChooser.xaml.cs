@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Windows.Controls;
 
-namespace QuickCapturePluginTest {
+namespace QuickCaptureAddInBrowseButton {
 	/// <summary>
 	/// Interaction logic for TableChooser.xaml
 	/// </summary>

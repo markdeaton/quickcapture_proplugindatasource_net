@@ -2,9 +2,9 @@
 <ArcGIS defaultAssembly="QuickCaptureSqliteDBCustomItem.dll" defaultNamespace="QuickCaptureSqliteDBCustomItem" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
   <AddInInfo id="{1daf41c5-b083-4c9a-a515-4cb276a93c74}" version="1.0" desktopVersion="2.4.19257">
     <Name>QuickCaptureSqliteDBCustomItem</Name>
-    <Description>QuickCaptureSqliteDBCustomItem description</Description>
+    <Description>QuickCapture SqliteDB CustomItem Add-in</Description>
     <Image>Images\AddinDesktop32.png</Image>
-    <Author>mark4238</Author>
+    <Author>Esri APL</Author>
     <Company>Esri APL</Company>
     <Date>4/5/2019 2:20:21 PM, 2019</Date>
     <Subject>Framework</Subject>

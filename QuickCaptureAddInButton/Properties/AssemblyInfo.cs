@@ -23,11 +23,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("QuickCaptureErrorsPlugin")]
+[assembly: AssemblyTitle("QuickCaptureAddInBrowseButton")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Esri APL")]
-[assembly: AssemblyProduct("QuickCapture Plugin Datasource")]
+[assembly: AssemblyProduct("QuickCapture Errors Browse Button")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

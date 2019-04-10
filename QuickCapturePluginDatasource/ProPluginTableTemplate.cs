@@ -63,6 +63,8 @@ namespace QuickCapturePluginDatasource {
 		private SpatialReference _sr;
 		private bool _hasZ = false;
 
+		private bool _attributeColumnsAdded = false;
+
 		internal ProPluginTableTemplate(SQLiteConnection dbConn, string name, string featSvcUrl, SpatialReference sr = null) {
 			_dbConn = dbConn;
 			_name = name;
@@ -237,7 +239,7 @@ namespace QuickCapturePluginDatasource {
 			if (sCleanName.Length > 64) sCleanName = sCleanName.Substring(0, 64);
 			return sCleanName;
 		}
-		private void InitializeFeatureColumns(string sFeat) {
+		private void AddQuickCaptureColumns() {
 			// Add the columns we pulled from SQLite; the rest will come from the Feature data
 			DataColumn oid = new DataColumn(Properties.Settings.Default.FieldName_OID, typeof(Int32));
 			_table.Columns.Add(oid);
@@ -246,6 +248,8 @@ namespace QuickCapturePluginDatasource {
 			_table.Columns.Add(Properties.Settings.Default.FieldName_Timestamp, typeof(DateTime));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorMsg, typeof(string));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_att_FileName, typeof(string));
+		}
+		private void AddAttributeColumns(string sFeat) {
 			// Add a shape column
 			_table.Columns.Add(Properties.Settings.Default.FieldName_Shape, typeof(Byte[]));
 			// Now read through the feature attributes to get the rest of the columns
@@ -255,6 +259,7 @@ namespace QuickCapturePluginDatasource {
 				// TODO Use schema info once available, to add columns of type other than string
 				_table.Columns.Add(CleanFieldName(attr.Name), typeof(string));
 			}
+			_attributeColumnsAdded = true;
 		}
 		/// <summary>
 		/// Get basic information about the kind of geometry in this table
@@ -262,25 +267,7 @@ namespace QuickCapturePluginDatasource {
 		/// <param name="sFeatId">The FeatureID value from SQLite</param>
 		/// <param name="sGeom">Geometry JSON from "Feature" field</param>
 		private void GetGeometryTypeInfo(string sFeatId, string sGeom) {
-			// TODO Assumption: geometry is in a JSON format that can be imported by GeometryEngine.ImportFromJSON()
-			// see https://developers.arcgis.com/documentation/common-data-types/geometry-objects.htm
-			//JObject geom = (JObject)JObject.Parse(sFeat).GetValue("geometry");
-			//JToken tknCoord, tknPaths, tknRings;
-			//if (geom.TryGetValue("x", out tknCoord) && geom.TryGetValue("y", out tknCoord)) {
-			//	// Point: x, y, optional z
-			//	_shapeType = GeometryType.Point;
-			//	_hasZ = geom.TryGetValue("z", out tknCoord);
-			//} else if (geom.TryGetValue("paths", out tknPaths)) {
-			//	// Polyline: array of array of points
-			//	_shapeType = GeometryType.Polyline;
-			//	_hasZ = tknPaths.First.First.Count() > 2;
-			//} else if (geom.TryGetValue("rings", out tknRings)) {
-			//	// Polygon: array of array of points
-			//	_shapeType = GeometryType.Polygon;
-			//	_hasZ = tknPaths.First.First.Count() > 2;
-			//} else { // Not a valid geometry type
-			//	throw new Exception($"Feature ID {sFeatId} isn't of type MapPoint, Polyline, or Polygon");
-			//}
+			// Geometry should always be in a JSON format that can be imported by GeometryEngine.ImportFromJSON()
 			Geometry geom = GeometryEngine.Instance.ImportFromJSON(JSONImportFlags.jsonImportDefaults, sGeom);
 			_shapeType = geom.GeometryType;
 			_hasZ = geom.HasZ;
@@ -297,11 +284,13 @@ namespace QuickCapturePluginDatasource {
 			_extent = _sr_extent;
 		}
 
-		// TODO Assumption: timestamps are in 1970 epoch milliseconds, UTC
+		// Per Ismael, timestamps are in 1970 epoch milliseconds, UTC
 		private readonly DateTime EPOCH_START = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
 		private void Open() {
 			// Initialize our data table
 			_table = new DataTable();
+			AddQuickCaptureColumns(); // Add basic columns that should always exist
 
 			//Read in the data
 			// TODO Assumption: SQLite Feature, FeatureId, Timestamp, ErrorMessage, FileName field names will always be the same
@@ -311,8 +300,8 @@ namespace QuickCapturePluginDatasource {
 				+ $"f.{ Properties.Settings.Default.FieldName_ErrorMsg}, a.{Properties.Settings.Default.FieldName_att_FileName} "
 				+ $"FROM {Properties.Settings.Default.TableName_Features} AS f LEFT JOIN {Properties.Settings.Default.TableName_Attachments} AS a "
 				+ $"ON f.{Properties.Settings.Default.FieldName_FeatureID} = a.{Properties.Settings.Default.FieldName_att_FeatureID} "
-				+ $"WHERE f.{Properties.Settings.Default.FieldName_FeatureSvcLayer} = '{_featSvcUrl}' "
-				+ $"AND f.{Properties.Settings.Default.FieldName_Feature} IS NOT NULL ";
+				+ $"WHERE f.{Properties.Settings.Default.FieldName_FeatureSvcLayer} = '{_featSvcUrl}' ";
+				//+ $"AND f.{Properties.Settings.Default.FieldName_Feature} IS NOT NULL ";
 
 			using (SQLiteCommand cmd = _dbConn.CreateCommand()) {
 				cmd.CommandText = sQryTable;
@@ -320,28 +309,31 @@ namespace QuickCapturePluginDatasource {
 				SQLiteDataReader reader = cmd.ExecuteReader();
 				List<RBushCoord3D> coordsToBulkAdd = new List<RBushCoord3D>();
 				while (reader.Read()) {
+					// Read data rows
+					DataRow row = _table.NewRow();
+
+					// Basic data that should always be there
 					string sFeat = reader[Properties.Settings.Default.FieldName_Feature].ToString();
 					string sFeatId = reader[Properties.Settings.Default.FieldName_FeatureID].ToString();
-					// TODO Assumption: okay to skip a feature error row with no data in Feature field - not true - need to provide w/null geometry
+					Int64 loid = (Int64)reader[Properties.Settings.Default.FieldName_OID];
+					Int32 oid = (Int32)loid;
+					row[Properties.Settings.Default.FieldName_OID] = oid;
+					row[Properties.Settings.Default.FieldName_FeatureID] = sFeatId;
+					row[Properties.Settings.Default.FieldName_ErrorMsg] = reader[Properties.Settings.Default.FieldName_ErrorMsg].ToString();
+					// It's not okay to skip a row with no data in Feature field; geometry will default to null if not set
 					if (sFeat.Length > 0) {
-						// TODO Assumption: if feature data exists, it will be well-formed and correct - need to present nulls for invalid data
 						JObject feat = JObject.Parse(sFeat);
 						string sGeom = feat.Value<JObject>("geometry").ToString();
-						if (_table.Columns.Count == 0) { // Need to set up columns
-							InitializeFeatureColumns(sFeat);
+						if (!_attributeColumnsAdded) { // Need to set up columns
+							AddAttributeColumns(sFeat);
+						}
+						if (_shapeType == GeometryType.Unknown) { 
 							// Also get basic info about the geometry: point/line/polygon, has z values, ...
 							GetGeometryTypeInfo(sFeatId, sGeom);
 						}
 
-						// Read data rows
-						DataRow row = _table.NewRow();
 						// TODO Assumption: since ArcGIS treats oids as int32, there won't ever be so many SQLite (long) rowids that they can't be cast to int32s
 						// See http://desktop.arcgis.com/en/arcmap/latest/manage-data/databases/dbms-data-types-supported.htm#ESRI_SECTION1_E1310ADFB340464485BA2D2D167C9AE4
-						Int64 loid = (Int64)reader[Properties.Settings.Default.FieldName_OID];
-						Int32 oid = (Int32)loid;
-						row[Properties.Settings.Default.FieldName_OID] = oid;
-						row[Properties.Settings.Default.FieldName_FeatureID] = sFeatId;
-						row[Properties.Settings.Default.FieldName_ErrorMsg] = reader[Properties.Settings.Default.FieldName_ErrorMsg].ToString();
 
 						string sAttachment = reader[Properties.Settings.Default.FieldName_att_FileName].ToString();
 						if (sAttachment.Length > 0)
@@ -385,20 +377,6 @@ namespace QuickCapturePluginDatasource {
 							} else {
 								_extent = _extent.Union2D(envThisFeature);
 							}
-							//    var rbushCoord = new RBushCoord3D(coord, (int)row["OBJECTID"]);
-							//    _rtree.Insert(rbushCoord);
-
-							//    //update max and min for use in the extent
-							//    if (_rtree.Count == 1)
-							//    {
-							//      //first record
-							//      _extent = rbushCoord.Envelope;
-							//    }
-							//    else
-							//    {
-							//      _extent = rbushCoord.Envelope.Union2D(_extent);
-							//    }
-							//  }
 						}
 
 						// Attributes
@@ -410,8 +388,8 @@ namespace QuickCapturePluginDatasource {
 							}
 						}
 
-						_table.Rows.Add(row);
 					}
+					_table.Rows.Add(row);
 				}
 				// Update spatial index
 				_rtree.BulkLoad(coordsToBulkAdd);
@@ -419,7 +397,6 @@ namespace QuickCapturePluginDatasource {
 		}
 
 		private Geometry BuildFeatureGeometry(string sGeom) {
-			// TODO Assumption: all QuickCapture features have geometries - need to test w/null geometries
 			// If we've gotten here, the JSON should have a point, polyline, or polygon geometry
 			Geometry geom = GeometryEngine.Instance.ImportFromJSON(JSONImportFlags.jsonImportDefaults, sGeom);
 			return geom;
