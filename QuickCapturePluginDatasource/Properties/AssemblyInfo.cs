@@ -17,13 +17,12 @@
 
 */
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("QuickCapturePlugin")]
+[assembly: AssemblyTitle("QuickCapturePluginDatasource")]
 [assembly: AssemblyDescription("ArcGIS Pro classes providing access to SQLite data sources")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Esri APL")]

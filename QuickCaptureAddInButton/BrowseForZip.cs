@@ -39,7 +39,7 @@ namespace QuickCapturePluginTest {
 			OpenFileDialog dlgFiles = new OpenFileDialog() {
 				Title = "Select a QuickCapture error archive",
 				DefaultExt = ".zip",
-				Filter = "Zip files (.zip)|*.zip"
+				Filter = "QuickCapture Error Archive (.qcerrors)|*.qcerrors"
 			};
 			string filename;
 			bool? res = dlgFiles.ShowDialog();
@@ -66,7 +66,7 @@ namespace QuickCapturePluginTest {
 					string db_path = Path.Combine(tempDir, "Errors.sqlite");
 
 					pluginws = new PluginDatastore(
-						 new PluginDatasourceConnectionPath("QuickCapturePlugin_Datasource",
+						 new PluginDatasourceConnectionPath("QuickCapture_Datasource",
 							   new Uri(db_path, UriKind.Absolute)));
 					System.Diagnostics.Debug.Write("==========================\r\n");
 

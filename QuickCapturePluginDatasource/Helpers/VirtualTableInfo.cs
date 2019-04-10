@@ -1,4 +1,4 @@
-﻿namespace QuickCapturePlugin.Helpers {
+﻿namespace QuickCapturePluginDatasource.Helpers {
 	internal class VirtualTableInfo: System.IDisposable {
 		private string _featSvcUrl;
 		private ProPluginTableTemplate _table = null;

@@ -18,20 +18,19 @@
 */
 using ArcGIS.Core.Data;
 using ArcGIS.Core.Data.PluginDatastore;
-using ArcGIS.Core.Geometry;
-using QuickCapturePlugin.Helpers;
+using QuickCapturePluginDatasource.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace QuickCapturePlugin {
-    /// <summary>
-    /// Implements a custom plugin datasource for reading Sqlite database tables and feature classes
-    /// </summary>
-    /// <remarks>A per thread instance will be created (as needed) by Pro.</remarks>
-    public class ProPluginDatasourceTemplate : PluginDatasourceTemplate {
+namespace QuickCapturePluginDatasource {
+	/// <summary>
+	/// Implements a custom plugin datasource for reading Sqlite database tables and feature classes
+	/// </summary>
+	/// <remarks>A per thread instance will be created (as needed) by Pro.</remarks>
+	public class ProPluginDatasourceTemplate : PluginDatasourceTemplate {
 
 		[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
 		[DllImport("kernel32.dll")]

@@ -11,10 +11,10 @@
     <Target name="ArcGISPro" version="2.3" />
   </Targets>
   <!-- CLR should be set to the $targetframeworkversion$ set in the .csproj -->
-  <AddIn language="CLR4.6.1" library="QuickCapturePlugin.dll" namespace="QuickCapturePlugin">
+  <AddIn language="CLR4.6.1" library="QuickCapturePluginDatasource.dll" namespace="QuickCapturePluginDatasource">
     <ArcGISPro>
       <PluginDatasources>
-        <PluginDatasource id="QuickCapturePlugin_Datasource" class="ProPluginDatasourceTemplate" />
+        <PluginDatasource id="QuickCapture_Datasource" class="ProPluginDatasourceTemplate" />
       </PluginDatasources>
     </ArcGISPro>
   </AddIn>

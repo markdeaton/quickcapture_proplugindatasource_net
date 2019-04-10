@@ -111,7 +111,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 					tempDBPath = System.IO.Path.Combine(tempDir, "Errors.sqlite");
 
 					pluginws = new PluginDatastore(
-						 new PluginDatasourceConnectionPath("QuickCapturePlugin_Datasource",
+						 new PluginDatasourceConnectionPath("QuickCapture_Datasource",
 							   new Uri(tempDBPath, UriKind.Absolute)));
 					System.Diagnostics.Debug.Write("==========================\r\n");
 
@@ -141,6 +141,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 	/// <remarks>QuickCaptureVirtualTables are, themselves, custom items</remarks>
 	internal class QuickCaptureVirtualTable : CustomItemBase/*, IDisposable*/ {
 		private ImageSource largeIcon = null, smallIcon = null;
+		private PluginDatastore _pluginDS = null;
 
 		public QuickCaptureVirtualTable(string name, string path, string type, string lastModifiedTime, PluginDatastore pluginws) : base(name, path, type, lastModifiedTime) {
 			this.DisplayType = "QuickCapture Virtual Table";
@@ -176,7 +177,6 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 		}
 
 		public string TableName { get => this.Name; }
-		private PluginDatastore _pluginDS = null;
 		public PluginDatastore PluginDS { get => _pluginDS; }
 
 		//#region IDisposable Support

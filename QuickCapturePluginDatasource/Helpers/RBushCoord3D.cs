@@ -20,7 +20,7 @@ using RBush;
 using System;
 
 
-namespace QuickCapturePlugin.Helpers {
+namespace QuickCapturePluginDatasource.Helpers {
 	internal class RBushCoord3D : ISpatialData, IComparable<RBushCoord3D>
   {
 

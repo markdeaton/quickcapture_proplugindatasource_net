@@ -20,7 +20,7 @@ using ArcGIS.Core.Data.PluginDatastore;
 using ArcGIS.Core.Geometry;
 using System.Collections.Generic;
 
-namespace QuickCapturePlugin {
+namespace QuickCapturePluginDatasource {
 	/// <summary>
 	/// Implements a plugin cursor
 	/// </summary>

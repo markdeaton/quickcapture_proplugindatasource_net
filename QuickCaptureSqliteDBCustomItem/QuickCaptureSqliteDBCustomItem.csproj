@@ -138,6 +138,12 @@
   <ItemGroup>
     <AddInContent Include="DarkImages\GenericButtonBlue32.png" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\QuickCapturePluginDatasource\QuickCapturePluginDatasource.csproj">
+      <Project>{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}</Project>
+      <Name>QuickCapturePluginDatasource</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!--
   PackageAction can be:

@@ -20,7 +20,7 @@ using ArcGIS.Core.Data;
 using ArcGIS.Core.Data.PluginDatastore;
 using ArcGIS.Core.Geometry;
 using Newtonsoft.Json.Linq;
-using QuickCapturePlugin.Helpers;
+using QuickCapturePluginDatasource.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -28,7 +28,7 @@ using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 
-namespace QuickCapturePlugin {
+namespace QuickCapturePluginDatasource {
 	/// <summary>
 	/// (Custom) interface the sample uses to extract row information from the
 	/// plugin table

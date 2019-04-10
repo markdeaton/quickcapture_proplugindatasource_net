@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.168
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCapturePluginTest", "QuickCaptureAddInButton\QuickCapturePluginTest.csproj", "{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCaptureAddInButton", "QuickCaptureAddInButton\QuickCaptureAddInButton.csproj", "{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCapturePlugin", "QuickCapturePluginDatasource\QuickCapturePlugin.csproj", "{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCapturePluginDatasource", "QuickCapturePluginDatasource\QuickCapturePluginDatasource.csproj", "{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCaptureSqliteDBCustomItem", "QuickCaptureSqliteDBCustomItem\QuickCaptureSqliteDBCustomItem.csproj", "{1DAF41C5-B083-4C9A-A515-4CB276A93C74}"
 EndProject
