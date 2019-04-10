@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.168
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCapturePluginTest", "QuickCaptureAddInButton\QuickCapturePluginTest.csproj", "{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCapturePlugin", "QuickCapturePluginDatasource\QuickCapturePlugin.csproj", "{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickCaptureSqliteDBCustomItem", "QuickCaptureSqliteDBCustomItem\QuickCaptureSqliteDBCustomItem.csproj", "{1DAF41C5-B083-4C9A-A515-4CB276A93C74}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}.Debug|x64.ActiveCfg = Debug|x64
+		{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}.Debug|x64.Build.0 = Debug|x64
+		{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}.Release|x64.ActiveCfg = Release|x64
+		{A42EEC68-8DA2-42AB-83E7-775F1B4BFBD7}.Release|x64.Build.0 = Release|x64
+		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Debug|x64.ActiveCfg = Debug|x64
+		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Debug|x64.Build.0 = Debug|x64
+		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Release|x64.ActiveCfg = Release|x64
+		{EB50B355-3CC8-4CAD-BA92-142FE4D9C783}.Release|x64.Build.0 = Release|x64
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Debug|x64.ActiveCfg = Debug|x64
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Debug|x64.Build.0 = Debug|x64
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Release|x64.ActiveCfg = Release|Any CPU
+		{1DAF41C5-B083-4C9A-A515-4CB276A93C74}.Release|x64.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FBECD763-FEA3-413C-BC52-6AD89BDF6F34}
+	EndGlobalSection
+EndGlobal

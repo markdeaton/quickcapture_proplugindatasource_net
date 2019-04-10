@@ -1,0 +1,42 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="QuickCapturePlugin.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="FieldName_Feature" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Feature</Value>
+    </Setting>
+    <Setting Name="FieldName_OID" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">rowid</Value>
+    </Setting>
+    <Setting Name="TableName_Features" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Features</Value>
+    </Setting>
+    <Setting Name="TableName_Attachments" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Attachments</Value>
+    </Setting>
+    <Setting Name="FieldName_FeatureSvcLayer" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">LayerURL</Value>
+    </Setting>
+    <Setting Name="FieldName_FeatureID" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">FeatureId</Value>
+    </Setting>
+    <Setting Name="FieldName_Timestamp" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Timestamp</Value>
+    </Setting>
+    <Setting Name="FieldName_Shape" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Shape</Value>
+    </Setting>
+    <Setting Name="FieldName_att_FeatureID" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">FeatureId</Value>
+    </Setting>
+    <Setting Name="FieldName_att_FileName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">FileName</Value>
+    </Setting>
+    <Setting Name="FieldName_ErrorMsg" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">ErrorMessage</Value>
+    </Setting>
+    <Setting Name="DirName_Attachments" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Attachments</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
