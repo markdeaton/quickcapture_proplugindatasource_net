@@ -128,9 +128,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="SQLite.Interop.dll">
+    <None Include="SQLite.Interop.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!--
