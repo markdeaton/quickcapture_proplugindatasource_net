@@ -15,6 +15,9 @@ namespace QuickCaptureAddInBrowseButton {
 			lbTables.ItemsSource = tables;
 		}
 
+		/// <summary>
+		/// The list of QuickCapture virtual tables the user has selected to add to the map.
+		/// </summary>
 		public System.Collections.IList SelectedTableNames { get => lbTables.SelectedItems; }
 
 		private void LbTables_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) {

@@ -22,7 +22,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 	/// when a project is opened that contains a persisted QuakeProjectItem, QuakeProjectItem
 	/// is asked to re-hydrate itself (based on the name, catalogpath, and type that was
 	/// saved in the project)</remarks>
-	internal class QuickCaptureDBItem : CustomProjectItemBase {
+	internal class QuickCaptureDBItem : CustomItemBase {
 		
 		protected QuickCaptureDBItem() : base() { }
 		protected QuickCaptureDBItem(ItemInfoValue iiv) : base(FlipBrowseDialogOnly(iiv)) { }
@@ -132,7 +132,6 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 			//Add the event "child" items to the child collection
 			this.AddRangeToChildren(events);
 		}
-
 	}
 
 	/// <summary>
