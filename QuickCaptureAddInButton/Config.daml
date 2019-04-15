@@ -18,7 +18,7 @@
 
 -->
 <ArcGIS defaultAssembly="QuickCaptureAddInBrowseButton.dll" defaultNamespace="QuickCaptureAddInBrowseButton" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
-  <AddInInfo id="{700BEFCE-B06B-494C-BC33-2E8CE1B2A826}" version="1.0" desktopVersion="2.3">
+  <AddInInfo id="{700BEFCE-B06B-494C-BC33-2E8CE1B2A826}" version="1.0" desktopVersion="2.4">
     <Name>QuickCapturePluginTest</Name>
     <Description>QuickCapturePluginTest description</Description>
     <Image>Images\AddinDesktop32.png</Image>

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ArcGIS defaultAssembly="QuickCaptureSqliteDBCustomItem.dll" defaultNamespace="QuickCaptureSqliteDBCustomItem" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
-  <AddInInfo id="{1daf41c5-b083-4c9a-a515-4cb276a93c74}" version="1.0" desktopVersion="2.4.19257">
+  <AddInInfo id="{1daf41c5-b083-4c9a-a515-4cb276a93c74}" version="1.0" desktopVersion="2.4">
     <Name>QuickCaptureSqliteDBCustomItem</Name>
     <Description>QuickCapture SqliteDB CustomItem Add-in</Description>
     <Image>Images\AddinDesktop32.png</Image>
