@@ -25,7 +25,7 @@
     developing your custom item and refactoring your code, etc.-->
     <updateCategory refID="esri_customItems">
       <insertComponent id="quickcapture_sqlite_handler" className="QuickCaptureSqliteDBCustomItem.Items.QuickCaptureDBItem" containerType="QuickCaptureContainer">
-        <content displayName="QuickCapture Errors" fileExtension="qcerrors" isContainer="true" keywords="quickcapture" />
+        <content displayName="QuickCapture Errors" fileExtension="qcr" isContainer="true" keywords="quickcapture" />
       </insertComponent>
       
     </updateCategory>

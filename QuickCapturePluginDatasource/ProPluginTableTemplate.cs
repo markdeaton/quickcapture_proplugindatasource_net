@@ -49,11 +49,19 @@ namespace QuickCapturePluginDatasource {
 
 		private SQLiteConnection _dbConn;
 		private readonly string _name;
+		/// <summary>
+		/// Directory holding the attachments (photos) associated with the QuickCapture errors
+		/// </summary>
 		private readonly string _attachmentsDir;
+		/// <summary>
+		/// Directory holding the JSON files that define the layerinfo for the services from which the errors came
+		/// </summary>
+		//private readonly string _schemaDefnsDir;
 		/// <summary>
 		/// This plugin table represents all features that failed to get stored into a particular feature service
 		/// </summary>
 		private readonly string _featSvcUrl;
+		private readonly JObject _layerInfoJson;
 		private DataTable _table;
 		private RBush.RBush<RBushCoord3D> _rtree;
 		private RBush.Envelope _extent;
@@ -65,10 +73,11 @@ namespace QuickCapturePluginDatasource {
 
 		private bool _attributeColumnsAdded = false;
 
-		internal ProPluginTableTemplate(SQLiteConnection dbConn, string name, string featSvcUrl, SpatialReference sr = null) {
+		internal ProPluginTableTemplate(SQLiteConnection dbConn, string name, string featSvcUrl, string layerInfoJson) {
 			_dbConn = dbConn;
 			_name = name;
 			_featSvcUrl = featSvcUrl;
+			_layerInfoJson = JObject.Parse(layerInfoJson);
 			_rtree = new RBush.RBush<RBushCoord3D>();
 			//_sr = sr ?? SpatialReferences.WGS84;
 			// _sr set when we first GetGeometryTypeInfo() after we start reading records
@@ -241,6 +250,7 @@ namespace QuickCapturePluginDatasource {
 		}
 		private void AddQuickCaptureColumns() {
 			// Add the columns we pulled from SQLite; the rest will come from the Feature data
+			// TODO Change ErrorMsg column to ErrorData, and add an InnerErrorMsg column for just the error text
 			DataColumn oid = new DataColumn(Properties.Settings.Default.FieldName_OID, typeof(Int32));
 			_table.Columns.Add(oid);
 			_table.PrimaryKey = new DataColumn[] { oid };
@@ -255,9 +265,40 @@ namespace QuickCapturePluginDatasource {
 			// Now read through the feature attributes to get the rest of the columns
 			dynamic feature = JObject.Parse(sFeat);
 			dynamic attrs = feature.attributes;
+			string fieldName = attrs.Name;
+			DataColumn col = _table.Columns.Add(CleanFieldName(fieldName), typeof(string));
 			foreach (dynamic attr in attrs) {
-				// TODO Use schema info once available, to add columns of type other than string
-				_table.Columns.Add(CleanFieldName(attr.Name), typeof(string));
+				// TODO Use schema info, once available, to add columns of type other than string
+				foreach (dynamic field in _layerInfoJson["fields"]) {
+					if (field.name == fieldName) {
+						col.Caption = field.alias;
+						string type = field.type;
+						switch (type) {
+							case "esriFieldTypeString":
+								col.DataType = typeof(string);
+								break;
+							case "esriFieldTypeDate":
+								col.DataType = typeof(DateTime);
+								break;
+							case "esriFieldTypeInteger":
+								col.DataType = typeof(int);
+								break;
+							case "esriFieldTypeDouble":
+
+								break;
+							case "esriFieldTypeSingle":
+
+								break;
+							case "esriFieldTypeSmallInteger":
+
+								break;
+							default:
+
+								break;
+						}
+						break;
+					}
+				}
 			}
 			_attributeColumnsAdded = true;
 		}
@@ -492,7 +533,6 @@ namespace QuickCapturePluginDatasource {
 
 					bool filterIsEnvelope = sqf.FilterGeometry is Envelope;
 					//search spatial index first
-					// TODO question: does RBush support projections other than WGS84 Geographic?
 					var extent = sqf.FilterGeometry.Extent;
 					var candidates = _rtree.Search(extent.ToRBushEnvelope());
 
@@ -572,6 +612,9 @@ namespace QuickCapturePluginDatasource {
 		#region IDisposable
 
 		private bool _disposed = false;
+		/// <summary>
+		/// Implementation of IDisposable interface
+		/// </summary>
 		public void Dispose() {
 			Dispose(true);
 			GC.SuppressFinalize(this);

@@ -39,7 +39,7 @@ namespace QuickCaptureAddInBrowseButton {
 			OpenFileDialog dlgFiles = new OpenFileDialog() {
 				Title = "Select a QuickCapture error archive",
 				DefaultExt = ".zip",
-				Filter = "QuickCapture Error Archive (.qcerrors)|*.qcerrors"
+				Filter = "QuickCapture Error Archive (.qcr)|*.qcr"
 			};
 			string filename;
 			bool? res = dlgFiles.ShowDialog();

@@ -125,7 +125,8 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 
 			foreach (string table in tables) {
 				// TODO Assumption: it's okay to have a null timestamp for catalog items
-				QuickCaptureVirtualTable vTbl = new QuickCaptureVirtualTable(table, $"{tempDBPath}[{table}]", "QuickCapture_VirtualTable", null, pluginws);
+				// TODO Get timestamp: 1) Implement ProPluginDatasourceTemplate::GetTSForTable(sTableName); 2) Cast pluginws to ProPluginDatasourceTemplate (?)
+				QuickCaptureVirtualTable vTbl = new QuickCaptureVirtualTable(table, $"{tempDBPath}[{table}]", "QuickCapture_VirtualTable", pluginws);
 				events.Add(vTbl);
 			}
 
@@ -138,11 +139,12 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 	/// QuickCapture virtual tables (each is a feature service). These are children of a QuickCaptureDBItem
 	/// </summary>
 	/// <remarks>QuickCaptureVirtualTables are, themselves, custom items</remarks>
-	internal class QuickCaptureVirtualTable : CustomItemBase/*, IDisposable*/ {
+	internal class QuickCaptureVirtualTable : CustomItemBase {
 		private ImageSource largeIcon = null, smallIcon = null;
-		private PluginDatastore _pluginDS = null;
+		private readonly PluginDatastore _pluginDS = null;
 
-		public QuickCaptureVirtualTable(string name, string path, string type, string lastModifiedTime, PluginDatastore pluginws) : base(name, path, type, lastModifiedTime) {
+		public QuickCaptureVirtualTable(string name, string path, string type, PluginDatastore pluginws) : base(name, path, type) {
+			//this.Type = type; // TODO necessary?
 			this.DisplayType = "QuickCapture Virtual Table";
 			this.ContextMenuID = "QuickCaptureSqliteDBCustomItem_ContextMenu";
 			this._pluginDS = pluginws;
@@ -177,36 +179,5 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 
 		public string TableName { get => this.Name; }
 		public PluginDatastore PluginDS { get => _pluginDS; }
-
-		//#region IDisposable Support
-		//private bool disposedValue = false; // To detect redundant calls
-
-		//protected virtual void Dispose(bool disposing) {
-		//	if (!disposedValue) {
-		//		if (disposing) {
-		//			_pluginDs.Dispose();
-		//		}
-
-		//		// TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-		//		// TODO: set large fields to null.
-
-		//		disposedValue = true;
-		//	}
-		//}
-
-		//// TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-		//// ~QuickCaptureVirtualTable() {
-		////   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-		////   Dispose(false);
-		//// }
-
-		//// This code added to correctly implement the disposable pattern.
-		//public void Dispose() {
-		//	// Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-		//	Dispose(true);
-		//	// TODO: uncomment the following line if the finalizer is overridden above.
-		//	// GC.SuppressFinalize(this);
-		//}
-		//#endregion
 	}
 }

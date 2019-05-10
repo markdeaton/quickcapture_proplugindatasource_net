@@ -18,12 +18,15 @@
 */
 using ArcGIS.Core.Data;
 using ArcGIS.Core.Data.PluginDatastore;
+using Newtonsoft.Json.Linq;
 using QuickCapturePluginDatasource.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace QuickCapturePluginDatasource {
 	/// <summary>
@@ -40,20 +43,8 @@ namespace QuickCapturePluginDatasource {
 		private SQLiteConnection _dbConn;
 
 		private Dictionary<string, VirtualTableInfo> _tables = new Dictionary<string, VirtualTableInfo>();
+		private string _layerInfosDir;
 
-		/// <summary>
-		/// Constructs a virtual table name from the feature service URL these features were stored in.
-		/// </summary>
-		/// <param name="sLyrUrl">The feature service URL</param>
-		/// <returns>Name of the virtual layer for these features</returns>
-		public static string TableNameFromFeatSvcURL(string sLyrUrl) {
-			Uri uri = new Uri(sLyrUrl);
-			int iSegs = uri.Segments.Length;
-			string sLyrName1 = uri.Segments[iSegs - 3].EndsWith("/") ? uri.Segments[iSegs - 3].Substring(0, uri.Segments[iSegs - 3].Length - 1) : uri.Segments[iSegs - 3];
-			string sLyrName2 = uri.Segments[iSegs - 1].EndsWith("/") ? uri.Segments[iSegs - 1].Substring(0, uri.Segments[iSegs - 1].Length - 1) : uri.Segments[iSegs - 1];
-			string sLyrName = sLyrName1 + "-" + sLyrName2;
-			return sLyrName;
-		}
 		/// <summary>
 		/// Open the specified workspace (database)
 		/// </summary>
@@ -69,14 +60,41 @@ namespace QuickCapturePluginDatasource {
 			//Strictly speaking, tracking your thread id is only necessary if
 			//your implementation uses internals that have thread affinity.
 			_thread_id = GetCurrentThreadId();
+			
+			// The key is the table's display name, not its url
 			_tables = new Dictionary<string, VirtualTableInfo>();
 
+			// Get LayerInfos
+			_layerInfosDir = Path.Combine(Path.GetDirectoryName(connectionPath.LocalPath), Properties.Settings.Default.DirName_LayerInfos);
 			string connection = @"Read Only=True;Data Source=" + connectionPath.LocalPath;
 			_dbConn = new SQLiteConnection(connection);
 			_dbConn.Open();
 
-			// For QuickCapture, we'll create virtual tables based on what kind of geometry and features we find in the Features table JSON
+			// For QuickCapture, we'll create virtual tables based on what kind of geometry and features we find in the Feature records JSON
 			GetTableNames();
+		}
+
+		/// <summary>
+		/// Constructs a virtual table name from info in the supplied layerInfos file.
+		/// </summary>
+		/// <param name="sLyrUrl">The feature service URL</param>
+		/// <param name="sLyrInfosFilePath">Location of the layerInfos file for this service/virtual table</param>
+		/// <returns>Name of the virtual layer for these features</returns>
+		private string TableName(string sLyrUrl, string sLyrInfoJson) {
+			// Assumption: Open() is called before anything else, so this will always have access to the layerInfos for table name lookup
+			string sTblName;
+			//return sLyrName;
+			try {
+				dynamic lyrInfo = JObject.Parse(sLyrInfoJson);
+				sTblName = lyrInfo.name.ToString();
+			} catch (Exception) { // Problem with JSON; divine the name another way
+				Uri uri = new Uri(sLyrUrl);
+				int iSegs = uri.Segments.Length;
+				string sLyrName1 = uri.Segments[iSegs - 3].EndsWith("/") ? uri.Segments[iSegs - 3].Substring(0, uri.Segments[iSegs - 3].Length - 1) : uri.Segments[iSegs - 3];
+				string sLyrName2 = uri.Segments[iSegs - 1].EndsWith("/") ? uri.Segments[iSegs - 1].Substring(0, uri.Segments[iSegs - 1].Length - 1) : uri.Segments[iSegs - 1];
+				sTblName = sLyrName1 + "-" + sLyrName2;
+			}
+			return sTblName;
 		}
 
 		public override void Close() {
@@ -112,8 +130,8 @@ namespace QuickCapturePluginDatasource {
 				throw new GeodatabaseTableException($"The table {name} was not found");
 			// Otherwise there's at least a partial VirtualTableInfo record there
 			if (_tables[name].Table == null) {
-				// TODO Assumption: all features are WGS84
-				_tables[name].Table = new ProPluginTableTemplate(_dbConn, name, _tables[name].FeatSvcUrl, null /*SpatialReferences.WGS84*/);
+				// TODO Assumption: all feature geometries are WGS84
+				_tables[name].Table = new ProPluginTableTemplate(_dbConn, name, _tables[name].FeatSvcUrl, _tables[name].LayerInfoJson);
 			}
 			return _tables[name].Table;
 		}
@@ -121,29 +139,38 @@ namespace QuickCapturePluginDatasource {
 		/// <summary>
 		/// Get the table names available in the workspace
 		/// </summary>
-		/// <returns><see cref="IReadOnlyList{string}"/></returns>
+		/// <returns>IReadOnlyList{string}</returns>
 		public override IReadOnlyList<string> GetTableNames() {
 			// If we've already collected them, don't do it again
 			if (_tables.Count <= 0) {
 				List<string> tableNames = new List<string>();
 				// TODO Assumption: Feature data is always found in a table named "Features".
-				// TODO Assumption: each feature's Layer URL will be its virtual table name
-				// TODO Assumption: Layer URL will always follow the format ".../<lyrname>/FeatureServer/#"
+				// TODO Get and use layerInfos to build table name here
+				// TODO Assumption: Archive has been completely extracted by this point
+				// Construct layerInfos path
+				// Open layerInfos file for this table
+				// Parse layerInfos 
 				using (SQLiteCommand cmd = _dbConn.CreateCommand()) {
-					cmd.CommandText = $"SELECT DISTINCT {Properties.Settings.Default.FieldName_FeatureSvcLayer}" +
-									  $", MAX({Properties.Settings.Default.FieldName_Timestamp})" +
-									  $" FROM {Properties.Settings.Default.TableName_Features}" +
-									  $" GROUP BY {Properties.Settings.Default.FieldName_FeatureSvcLayer}";
+					cmd.CommandText = $"SELECT DISTINCT " +
+									  $"	f.{Properties.Settings.Default.FieldName_FeatureSvcLayer}," +
+									  $"	l.{Properties.Settings.Default.FieldName_lyr_FileName}," +
+									  $"	MAX({Properties.Settings.Default.FieldName_Timestamp}) " +
+									  $"FROM {Properties.Settings.Default.TableName_Features} AS f LEFT JOIN {Properties.Settings.Default.TableName_LayerInfo} as l " +
+									  $"	ON f.{Properties.Settings.Default.FieldName_FeatureSvcLayer} = l.{Properties.Settings.Default.FieldName_FeatureSvcLayer} " +
+									  $"GROUP BY f.{Properties.Settings.Default.FieldName_FeatureSvcLayer}";
 					SQLiteDataReader reader = cmd.ExecuteReader();
 					while (reader.Read()) {
 						string sLyrUrl = reader[0].ToString();
-						string sLyrName = TableNameFromFeatSvcURL(sLyrUrl);
+						string sLayerInfosFilePath = Path.Combine(_layerInfosDir, reader[1].ToString());
+						string sLayerInfo = File.ReadAllText(sLayerInfosFilePath, Encoding.Default);
+						string sLyrName = TableName(sLyrUrl, sLayerInfo);
+						int? tableUpdated = reader[2] as int?;
 						System.Diagnostics.Debug.WriteLine(sLyrName);
-						_tables.Add(sLyrName, new VirtualTableInfo(sLyrUrl)); // We'll add table info in OpenTable()
+						_tables.Add(sLyrName, new VirtualTableInfo(sLyrUrl, sLayerInfo, tableUpdated)); // We'll add table info in OpenTable()
 					}
 				}
 			}
-			return _tables.Keys.ToList(); ;
+			return _tables.Keys.ToList();
 		}
 
 		/// <summary>

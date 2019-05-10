@@ -130,5 +130,32 @@ namespace QuickCapturePluginDatasource.Properties {
                 return ((string)(this["DirName_Attachments"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Layers")]
+        public string TableName_LayerInfo {
+            get {
+                return ((string)(this["TableName_LayerInfo"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("FileName")]
+        public string FieldName_lyr_FileName {
+            get {
+                return ((string)(this["FieldName_lyr_FileName"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("layerInfos")]
+        public string DirName_LayerInfos {
+            get {
+                return ((string)(this["DirName_LayerInfos"]));
+            }
+        }
     }
 }
