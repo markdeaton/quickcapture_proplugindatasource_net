@@ -170,26 +170,44 @@ namespace QuickCapturePluginDatasource {
 			// TODO Assumption: field list will be the same for all features stored in the same feature service (virtual table)
 			var pluginFields = new List<PluginField>();
 			
-			foreach (var col in _table.Columns.Cast<DataColumn>()) {
+			foreach (DataColumn col in _table.Columns/*.Cast<DataColumn>()*/) {
 				// Most fields will be strings
 				FieldType fieldType = FieldType.String;
 
-				// Special rule for geometry, OID, timestamp fields
+				// Special rule for geometry, OID
+				//, timestamp fields
 				if (col.ColumnName == Properties.Settings.Default.FieldName_Shape) {
 					fieldType = FieldType.Geometry;
 				} else if (col.ColumnName == Properties.Settings.Default.FieldName_OID) {
 					fieldType = FieldType.OID;
-				} else if (col.ColumnName == Properties.Settings.Default.FieldName_Timestamp) {
-					fieldType = FieldType.Date;
-				}
+				//} else if (col.ColumnName == Properties.Settings.Default.FieldName_Timestamp) {
+				//	fieldType = FieldType.Date;
+				} else fieldType = DotNetTypeToPlugInFieldType(col.DataType);
 				pluginFields.Add(new PluginField() {
 					Name = col.ColumnName,
 					AliasName = col.Caption,
 					FieldType = fieldType
 				});
+				
 			}
 
 			return pluginFields;
+
+			FieldType DotNetTypeToPlugInFieldType(Type dotNetType) {
+				// See for more info: http://desktop.arcgis.com/en/arcmap/latest/manage-data/geodatabases/arcgis-field-data-types.htm
+				if (dotNetType.Equals(typeof(Int16)))
+					return FieldType.SmallInteger;
+				else if (dotNetType.Equals(typeof(Int32)))
+					return FieldType.Integer;
+				else if (dotNetType.Equals(typeof(DateTime)))
+					return FieldType.Date;
+				else if (dotNetType.Equals(typeof(float)))
+					return FieldType.Single;
+				else if (dotNetType.Equals(typeof(double)))
+					return FieldType.Double;
+				// TODO Find out what other types might come from the SQLite DB fields. Here's the list of possibilities: https://pro.arcgis.com/en/pro-app/sdk/api-reference/#topic6820.html
+				else return FieldType.String;
+			}
 		}
 
 		#region IPluginRowProvider
@@ -257,7 +275,9 @@ namespace QuickCapturePluginDatasource {
 			_table.Columns.Add(Properties.Settings.Default.FieldName_FeatureID, typeof(string));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_Timestamp, typeof(DateTime));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorMsg, typeof(string));
-			_table.Columns.Add(Properties.Settings.Default.FieldName_att_FileName, typeof(string));
+			_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorData_out, typeof(string));
+			DataColumn col = _table.Columns.Add(Properties.Settings.Default.FieldName_att_FileName, typeof(string));
+			col.Caption = Properties.Settings.Default.FieldAlias_att_FileName;
 		}
 		private void AddAttributeColumns(string sFeat) {
 			// Add a shape column
@@ -265,42 +285,64 @@ namespace QuickCapturePluginDatasource {
 			// Now read through the feature attributes to get the rest of the columns
 			dynamic feature = JObject.Parse(sFeat);
 			dynamic attrs = feature.attributes;
-			string fieldName = attrs.Name;
-			DataColumn col = _table.Columns.Add(CleanFieldName(fieldName), typeof(string));
-			foreach (dynamic attr in attrs) {
-				// TODO Use schema info, once available, to add columns of type other than string
+			// Add most of what's in the SQLite Features table, Feature field
+			foreach (dynamic attr in attrs) {				
+				Type type = typeof(string);
+				string fieldAlias = null;
+				string fieldName = attr.Name; object fieldVal = attr.Value;
+				// Use schema info, once available, to add columns of type other than string
 				foreach (dynamic field in _layerInfoJson["fields"]) {
 					if (field.name == fieldName) {
-						col.Caption = field.alias;
-						string type = field.type;
-						switch (type) {
-							case "esriFieldTypeString":
-								col.DataType = typeof(string);
-								break;
-							case "esriFieldTypeDate":
-								col.DataType = typeof(DateTime);
-								break;
-							case "esriFieldTypeInteger":
-								col.DataType = typeof(int);
-								break;
-							case "esriFieldTypeDouble":
-
-								break;
-							case "esriFieldTypeSingle":
-
-								break;
-							case "esriFieldTypeSmallInteger":
-
-								break;
-							default:
-
-								break;
-						}
-						break;
+						if (field.type == "esriFieldTypeOID" || field.type == "esriFieldTypeGeometry") continue; // Column should already exist for these
+						type = ArcGISRestTypeToDotNetType(field.type);						
 					}
 				}
+				DataColumn col = _table.Columns.Add(CleanFieldName(fieldName), type);
+				if (!String.IsNullOrEmpty(fieldAlias)) col.Caption = fieldAlias;
+				//col.DataType = type;
 			}
+			// Add anything from layerInfo.json that wasn't in the SQLite feature attributes
+			foreach (dynamic field in _layerInfoJson["fields"]) {
+				string fieldName = CleanFieldName(field.name.ToString());
+				if (!_table.Columns.Contains(fieldName)) {
+					if (field.type == "esriFieldTypeOID" || field.type == "esriFieldTypeGeometry") continue; // Column should already exist for these
+					Type type = ArcGISRestTypeToDotNetType(field.type.ToString());
+					DataColumn col = _table.Columns.Add(fieldName, type);
+					col.Caption = field.alias;
+				}
+			}
+
 			_attributeColumnsAdded = true;
+
+			// See relevant links:
+			// http://desktop.arcgis.com/en/arcmap/latest/manage-data/geodatabases/arcgis-field-data-types.htm
+			// https://pro.arcgis.com/en/pro-app/sdk/api-reference/#topic6820.html
+			Type ArcGISRestTypeToDotNetType(string sType) {
+				Type type = null;
+				switch (sType) {
+					case "esriFieldTypeSmallInteger":
+						type = typeof(Int16);
+						break;
+					case "esriFieldTypeInteger":
+						type = typeof(Int32);
+						break;
+					case "esriFieldTypeSingle":
+						type = typeof(float);
+						break;
+					case "esriFieldTypeDouble":
+						type = typeof(double);
+						break;
+					case "esriFieldTypeDate":
+						type = typeof(DateTime);
+						break;
+					case "esriFieldTypeString":
+					default:
+						type = typeof(string);
+						break;
+				}
+				return type;
+
+			}
 		}
 		/// <summary>
 		/// Get basic information about the kind of geometry in this table
@@ -360,7 +402,9 @@ namespace QuickCapturePluginDatasource {
 					Int32 oid = (Int32)loid;
 					row[Properties.Settings.Default.FieldName_OID] = oid;
 					row[Properties.Settings.Default.FieldName_FeatureID] = sFeatId;
-					row[Properties.Settings.Default.FieldName_ErrorMsg] = reader[Properties.Settings.Default.FieldName_ErrorMsg].ToString();
+					string sErrorData = reader[Properties.Settings.Default.FieldName_ErrorData_in].ToString();
+					row[Properties.Settings.Default.FieldName_ErrorData_out] = sErrorData;
+					row[Properties.Settings.Default.FieldName_ErrorMsg] = GetErrorMessage(sErrorData);
 					// It's not okay to skip a row with no data in Feature field; geometry will default to null if not set
 					if (sFeat.Length > 0) {
 						JObject feat = JObject.Parse(sFeat);
@@ -425,7 +469,7 @@ namespace QuickCapturePluginDatasource {
 						foreach (dynamic attr in attrs) {
 							string sFldName = CleanFieldName(attr.Key);
 							if (_table.Columns.Contains(sFldName)) {
-								row[sFldName] = attr.Value.ToString();
+								row[sFldName] = attr.Value/*.ToString()*/;
 							}
 						}
 
@@ -434,6 +478,17 @@ namespace QuickCapturePluginDatasource {
 				}
 				// Update spatial index
 				_rtree.BulkLoad(coordsToBulkAdd);
+			}
+
+			string GetErrorMessage(string sErrorData) {
+				// Search through addResults array for error message
+				JObject jErrors = JObject.Parse(sErrorData);
+				List<string> sErrs = new List<string>();
+				foreach (JToken errTokn in jErrors.SelectTokens("$..error['message','description']")) { 
+					string sErr = errTokn.ToString(); // String.Join("; ", errs.ToArray());
+					sErrs.Add(sErr);
+				}
+				return String.Join("; ", sErrs);
 			}
 		}
 
