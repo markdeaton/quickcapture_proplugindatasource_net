@@ -275,7 +275,7 @@ namespace QuickCapturePluginDatasource {
 			_table.Columns.Add(Properties.Settings.Default.FieldName_FeatureID, typeof(string));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_Timestamp, typeof(DateTime));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorMsg, typeof(string));
-			_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorData_out, typeof(string));
+			//_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorData_out, typeof(string));
 			DataColumn col = _table.Columns.Add(Properties.Settings.Default.FieldName_att_FileName, typeof(string));
 			col.Caption = Properties.Settings.Default.FieldAlias_att_FileName;
 		}
@@ -402,9 +402,9 @@ namespace QuickCapturePluginDatasource {
 					Int32 oid = (Int32)loid;
 					row[Properties.Settings.Default.FieldName_OID] = oid;
 					row[Properties.Settings.Default.FieldName_FeatureID] = sFeatId;
-					string sErrorData = reader[Properties.Settings.Default.FieldName_ErrorData_in].ToString();
-					row[Properties.Settings.Default.FieldName_ErrorData_out] = sErrorData;
-					row[Properties.Settings.Default.FieldName_ErrorMsg] = GetErrorMessage(sErrorData);
+					string sErrorData = reader[Properties.Settings.Default.FieldName_ErrorMsg].ToString();
+					row[Properties.Settings.Default.FieldName_ErrorMsg] = sErrorData;
+					//row[Properties.Settings.Default.FieldName_ErrorMsg] = GetErrorMessage(sErrorData);
 					// It's not okay to skip a row with no data in Feature field; geometry will default to null if not set
 					if (sFeat.Length > 0) {
 						JObject feat = JObject.Parse(sFeat);
@@ -480,16 +480,16 @@ namespace QuickCapturePluginDatasource {
 				_rtree.BulkLoad(coordsToBulkAdd);
 			}
 
-			string GetErrorMessage(string sErrorData) {
-				// Search through addResults array for error message
-				JObject jErrors = JObject.Parse(sErrorData);
-				List<string> sErrs = new List<string>();
-				foreach (JToken errTokn in jErrors.SelectTokens("$..error['message','description']")) { 
-					string sErr = errTokn.ToString(); // String.Join("; ", errs.ToArray());
-					sErrs.Add(sErr);
-				}
-				return String.Join("; ", sErrs);
-			}
+			//string GetErrorMessage(string sErrorData) {
+			//	// Search through addResults array for error message
+			//	JObject jErrors = JObject.Parse(sErrorData);
+			//	List<string> sErrs = new List<string>();
+			//	foreach (JToken errTokn in jErrors.SelectTokens("$..error['message','description']")) { 
+			//		string sErr = errTokn.ToString(); // String.Join("; ", errs.ToArray());
+			//		sErrs.Add(sErr);
+			//	}
+			//	return String.Join("; ", sErrs);
+			//}
 		}
 
 		private Geometry BuildFeatureGeometry(string sGeom) {

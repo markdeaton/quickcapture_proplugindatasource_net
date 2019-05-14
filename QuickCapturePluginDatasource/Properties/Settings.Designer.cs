@@ -166,23 +166,5 @@ namespace QuickCapturePluginDatasource.Properties {
                 return ((string)(this["FieldAlias_att_FileName"]));
             }
         }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("ErrorData")]
-        public string FieldName_ErrorData_out {
-            get {
-                return ((string)(this["FieldName_ErrorData_out"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("ErrorMessage")]
-        public string FieldName_ErrorData_in {
-            get {
-                return ((string)(this["FieldName_ErrorData_in"]));
-            }
-        }
     }
 }
