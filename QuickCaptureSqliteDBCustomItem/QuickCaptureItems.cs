@@ -98,7 +98,8 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 			ProgressorSource ps = new ProgressorSource("Reading archive...", true);
 			await QueuedTask.Run(() => {
 				try {
-					// TODO Assumption: it's okay that sqlite DB and attachments will be deleted from temp by ArcGIS Pro when it closes
+					// Extract the archive
+					// NOTE: sqlite DB and attachments will be deleted from temp by ArcGIS Pro when it closes!
 
 					// Create temp directory - convoluted, but guarantees no filename conflicts
 					string tempDir = System.IO.Path.GetTempFileName();

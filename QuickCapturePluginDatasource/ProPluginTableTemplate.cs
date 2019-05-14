@@ -176,9 +176,9 @@ namespace QuickCapturePluginDatasource {
 
 				// Special rule for geometry, OID
 				//, timestamp fields
-				if (col.ColumnName == Properties.Settings.Default.FieldName_Shape) {
+				if (col.ColumnName.Equals(Properties.Settings.Default.FieldName_Shape, StringComparison.CurrentCultureIgnoreCase)) {
 					fieldType = FieldType.Geometry;
-				} else if (col.ColumnName == Properties.Settings.Default.FieldName_OID) {
+				} else if (col.ColumnName.Equals(Properties.Settings.Default.FieldName_OID, StringComparison.CurrentCultureIgnoreCase)) {
 					fieldType = FieldType.OID;
 				//} else if (col.ColumnName == Properties.Settings.Default.FieldName_Timestamp) {
 				//	fieldType = FieldType.Date;
@@ -294,12 +294,12 @@ namespace QuickCapturePluginDatasource {
 				foreach (dynamic field in _layerInfoJson["fields"]) {
 					if (field.name == fieldName) {
 						if (field.type == "esriFieldTypeOID" || field.type == "esriFieldTypeGeometry") continue; // Column should already exist for these
-						type = ArcGISRestTypeToDotNetType(field.type);						
+						type = ArcGISRestTypeToDotNetType(field.type);
+						fieldAlias = field.alias;
 					}
 				}
 				DataColumn col = _table.Columns.Add(CleanFieldName(fieldName), type);
 				if (!String.IsNullOrEmpty(fieldAlias)) col.Caption = fieldAlias;
-				//col.DataType = type;
 			}
 			// Add anything from layerInfo.json that wasn't in the SQLite feature attributes
 			foreach (dynamic field in _layerInfoJson["fields"]) {
