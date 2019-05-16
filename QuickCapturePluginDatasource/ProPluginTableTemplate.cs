@@ -19,6 +19,7 @@
 using ArcGIS.Core.Data;
 using ArcGIS.Core.Data.PluginDatastore;
 using ArcGIS.Core.Geometry;
+using ArcGIS.Desktop.Framework.Utilities;
 using Newtonsoft.Json.Linq;
 using QuickCapturePluginDatasource.Helpers;
 using System;
@@ -300,12 +301,14 @@ namespace QuickCapturePluginDatasource {
 			try {
 				feature = JObject.Parse(sFeat);
 			} catch (Exception e) {
+				EventLog.Write(EventLog.EventType.Error, $"AddAttributeColumns, parsing feature JSON: {string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message))}");
 				throw new Exception($"Couldn't parse the feature JSON data: {sFeat}", e);
 			}
 			dynamic attrs = null;
 			try {
 				attrs = feature.attributes;
 			} catch (Exception e) {
+				EventLog.Write(EventLog.EventType.Error, $"AddAttributeColumns, getting feature attributes: {string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message))}");
 				throw new Exception($"No attributes were found in this feature: {sFeat}", e);
 			}
 
@@ -313,7 +316,9 @@ namespace QuickCapturePluginDatasource {
 			IEnumerable<JToken> layerInfos = null; bool bLayerInfosAvailable = false;
 			try {
 				layerInfos = _layerInfoJson["fields"];
-			} finally { 
+			} catch (Exception e) {
+				EventLog.Write(EventLog.EventType.Error, $"AddAttributeColumns, getting layerInfo fields: {string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message))}");
+			} finally {
 				bLayerInfosAvailable = layerInfos != null && layerInfos.Count() > 0;
 			}
 			// Add most of what's in the SQLite Features table, Feature field
@@ -323,6 +328,7 @@ namespace QuickCapturePluginDatasource {
 				try {
 					fieldName = attr.Name; fieldVal = attr.Value;
 				} catch (Exception e) {
+					EventLog.Write(EventLog.EventType.Error, $"AddAttributeColumns, getting {fieldName} attribute name, value from '{attr.ToString()}': {string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message))}");
 					throw new Exception($"Couldn't get feature attribute name or value: {attr.ToString()}", e);
 				}
 

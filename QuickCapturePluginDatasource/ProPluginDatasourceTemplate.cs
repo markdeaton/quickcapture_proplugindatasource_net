@@ -18,6 +18,7 @@
 */
 using ArcGIS.Core.Data;
 using ArcGIS.Core.Data.PluginDatastore;
+using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Utilities;
 using Newtonsoft.Json.Linq;
 using QuickCapturePluginDatasource.Helpers;
@@ -28,7 +29,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows;
 
 namespace QuickCapturePluginDatasource {
 	/// <summary>
@@ -76,9 +76,9 @@ namespace QuickCapturePluginDatasource {
 				// For QuickCapture, we'll create virtual tables based on what kind of geometry and features we find in the Feature records JSON
 				GetTableNames();
 			} catch (Exception e) {
+				e.LogException("Reading archive and tables: ");
 				string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
-				EventLog.Write(EventLog.EventType.Error, $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}: {sMsgs}");
-				MessageBox.Show("Error reading archive and tables: " + sMsgs);
+				MessageBox.Show($"Error reading archive and tables: {sMsgs}");
 			}
 		}
 
@@ -95,7 +95,8 @@ namespace QuickCapturePluginDatasource {
 			try {
 				dynamic lyrInfo = JObject.Parse(sLyrInfoJson);
 				sTblName = lyrInfo.name.ToString();
-			} catch (Exception) { // Problem with JSON; generate the table name another way
+			} catch (Exception e) { // Problem with JSON; generate the table name another way
+				EventLog.Write(EventLog.EventType.Warning, "Could not get tablename from layerInfos; using alternate method.");
 				Uri uri = new Uri(sLyrUrl);
 				int iSegs = uri.Segments.Length;
 				string sLyrName1 = uri.Segments[iSegs - 3].EndsWith("/") ? uri.Segments[iSegs - 3].Substring(0, uri.Segments[iSegs - 3].Length - 1) : uri.Segments[iSegs - 3];
@@ -126,8 +127,6 @@ namespace QuickCapturePluginDatasource {
 		/// <param name="name">The name of the table to open</param>
 		/// <returns><see cref="PluginTableTemplate"/></returns>
 		public override PluginTableTemplate OpenTable(string name) {
-			// Catch exceptions in caller
-
 			//This is only necessary if your internals have thread affinity
 			//
 			//If you are using shared data (eg "static") it is your responsibility
@@ -136,12 +135,18 @@ namespace QuickCapturePluginDatasource {
 				throw new ArcGIS.Core.CalledOnWrongThreadException();
 			}
 
-			if (!this.GetTableNames().Contains(name))
-				throw new GeodatabaseTableException($"The table {name} was not found");
-			// Otherwise there's at least a partial VirtualTableInfo record there
-			if (_tables[name].Table == null) {
-				_tables[name].Table = new ProPluginTableTemplate(_dbConn, name, _tables[name].FeatSvcUrl, _tables[name].LayerInfoJson);
+			try {
+				if (!this.GetTableNames().Contains(name)) throw new GeodatabaseTableException($"The table {name} was not found");
+			} catch (Exception e) {
+				e.LogException("Couldn't get table names");				;
 			}
+
+			// Otherwise there's at least a partial VirtualTableInfo record there
+			if (_tables[name].Table == null) try {
+					_tables[name].Table = new ProPluginTableTemplate(_dbConn, name, _tables[name].FeatSvcUrl, _tables[name].LayerInfoJson);
+				} catch (Exception e) {
+					e.LogException($"Problem opening layer/table {name}");
+				}
 			return _tables[name].Table;
 		}
 
@@ -171,16 +176,21 @@ namespace QuickCapturePluginDatasource {
 									  $"GROUP BY f.{Properties.Settings.Default.FieldName_FeatureSvcLayer}";
 					SQLiteDataReader reader = cmd.ExecuteReader();
 					while (reader.Read()) {
-						string sLyrUrl = reader[0].ToString();
-						string sLayerInfosFilePath = Path.Combine(_layerInfosDir, reader[1].ToString());
-						string sLayerInfo = File.ReadAllText(sLayerInfosFilePath, Encoding.Default);
-						string sLyrName = TableName(sLyrUrl, sLayerInfo);
-						int? tableUpdated = reader[2] as int?;
-						System.Diagnostics.Debug.WriteLine(sLyrName);
-						_tables.Add(sLyrName, new VirtualTableInfo(sLyrUrl, sLayerInfo, tableUpdated)); // We'll add table info in OpenTable()
+						string sLyrUrl = null;
+						try {
+							sLyrUrl = reader[0].ToString();
+							string sLayerInfosFilePath = Path.Combine(_layerInfosDir, reader[1].ToString());
+							string sLayerInfo = File.ReadAllText(sLayerInfosFilePath, Encoding.Default);
+							string sLyrName = TableName(sLyrUrl, sLayerInfo);
+							int? tableUpdated = reader[2] as int?;
+							_tables.Add(sLyrName, new VirtualTableInfo(sLyrUrl, sLayerInfo, tableUpdated)); // We'll add table info in OpenTable()
+						} catch (Exception e) {
+							e.LogException($"GetTableNames could not create a table from {sLyrUrl}: ");
+						}
 					}
 				}
 			}
+			if (_tables.Count <= 0) throw new Exception("No layers or tables could be read from the archive.");
 			return _tables.Keys.ToList();
 		}
 

@@ -1,5 +1,6 @@
 ﻿using ArcGIS.Core.Data.PluginDatastore;
 using ArcGIS.Desktop.Core;
+using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Framework.Utilities;
@@ -122,7 +123,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 				} catch (Exception e) {
 					string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
 					EventLog.Write(EventLog.EventType.Error, $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}: {sMsgs}");
-					MessageBox.Show("Error reading archive and tables: " + sMsgs);
+					MessageBox.Show(FrameworkApplication.Current.MainWindow, "Error reading archive and tables: " + sMsgs);
 					pluginws?.Dispose();
 				}
 			}, ps.Progressor);
