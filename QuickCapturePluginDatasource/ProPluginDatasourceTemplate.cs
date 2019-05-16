@@ -76,7 +76,7 @@ namespace QuickCapturePluginDatasource {
 				// For QuickCapture, we'll create virtual tables based on what kind of geometry and features we find in the Feature records JSON
 				GetTableNames();
 			} catch (Exception e) {
-				e.LogException("Reading archive and tables: ");
+				e.LogException("Reading archive and tables");
 				string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
 				MessageBox.Show($"Error reading archive and tables: {sMsgs}");
 			}
@@ -185,7 +185,7 @@ namespace QuickCapturePluginDatasource {
 							int? tableUpdated = reader[2] as int?;
 							_tables.Add(sLyrName, new VirtualTableInfo(sLyrUrl, sLayerInfo, tableUpdated)); // We'll add table info in OpenTable()
 						} catch (Exception e) {
-							e.LogException($"GetTableNames could not create a table from {sLyrUrl}: ");
+							e.LogException($"GetTableNames could not create a table from {sLyrUrl}");
 						}
 					}
 				}

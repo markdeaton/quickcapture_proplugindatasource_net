@@ -308,8 +308,8 @@ namespace QuickCapturePluginDatasource {
 			try {
 				attrs = feature.attributes;
 			} catch (Exception e) {
-				EventLog.Write(EventLog.EventType.Error, $"AddAttributeColumns, getting feature attributes: {string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message))}");
-				throw new Exception($"No attributes were found in this feature: {sFeat}", e);
+				//e.LogException($"Couldn't read attributes for feature {sFeat}");
+				throw new Exception($"AddAttributeColumns--problem reading attributes for this feature: \"{sFeat}\"", e);
 			}
 
 			// Try to get layerInfo metadata for more accurate field creation
@@ -317,7 +317,8 @@ namespace QuickCapturePluginDatasource {
 			try {
 				layerInfos = _layerInfoJson["fields"];
 			} catch (Exception e) {
-				EventLog.Write(EventLog.EventType.Error, $"AddAttributeColumns, getting layerInfo fields: {string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message))}");
+				e.LogException($"AddAttributeColumns--problem getting layerInfo fields");
+				// No matching layerInfo field for feature attribute; we can recover by treating it as a string
 			} finally {
 				bLayerInfosAvailable = layerInfos != null && layerInfos.Count() > 0;
 			}
@@ -328,8 +329,8 @@ namespace QuickCapturePluginDatasource {
 				try {
 					fieldName = attr.Name; fieldVal = attr.Value;
 				} catch (Exception e) {
-					EventLog.Write(EventLog.EventType.Error, $"AddAttributeColumns, getting {fieldName} attribute name, value from '{attr.ToString()}': {string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message))}");
-					throw new Exception($"Couldn't get feature attribute name or value: {attr.ToString()}", e);
+					//e.LogException($"AddAttributeColumns--problem getting {fieldName} attribute name, value from '{attr.ToString()}'");
+					throw new Exception($"AddAttributeColumns--problem getting {fieldName} attribute (name, value) from '{attr.ToString()}'", e);
 				}
 
 				// Use schema info, if available, to add columns of type other than string
@@ -418,6 +419,7 @@ namespace QuickCapturePluginDatasource {
 		private readonly DateTime EPOCH_START = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
 		private void Open() {
+			// Allow caller to handle exceptions
 			// Initialize our data table
 			_table = new DataTable();
 			AddQuickCaptureColumns(); // Add basic columns that should always exist
