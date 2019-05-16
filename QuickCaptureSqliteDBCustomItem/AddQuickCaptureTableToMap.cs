@@ -1,8 +1,11 @@
 ﻿using ArcGIS.Core.Data;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework.Contracts;
+using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
+using ArcGIS.Desktop.Framework.Utilities;
 using ArcGIS.Desktop.Mapping;
+using QuickCapturePluginDatasource.Helpers;
 using QuickCaptureSqliteDBCustomItem.Items;
 using System;
 using System.Collections.Generic;
@@ -23,7 +26,10 @@ namespace QuickCaptureSqliteDBCustomItem.Buttons {
 							Table table = item.PluginDS.OpenTable(item.TableName);
 							LayerFactory.Instance.CreateFeatureLayer((FeatureClass)table, MapView.Active.Map);
 						} catch (Exception e) {
-							System.Diagnostics.Debug.WriteLine($"Error opening table '{item.TableName}': {e.Message}");
+							string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
+							EventLog.Write(EventLog.EventType.Error, $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}: {sMsgs}");
+							MessageBox.Show("Error opening errors table: " + sMsgs);
+							System.Diagnostics.Debug.WriteLine($"Error opening table '{item.TableName}': {sMsgs}");
 						}
 					}
 				}

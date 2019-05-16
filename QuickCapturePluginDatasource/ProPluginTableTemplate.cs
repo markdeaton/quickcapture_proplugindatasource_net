@@ -22,6 +22,7 @@ using ArcGIS.Core.Geometry;
 using Newtonsoft.Json.Linq;
 using QuickCapturePluginDatasource.Helpers;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
@@ -74,6 +75,8 @@ namespace QuickCapturePluginDatasource {
 		private bool _attributeColumnsAdded = false;
 
 		internal ProPluginTableTemplate(SQLiteConnection dbConn, string name, string featSvcUrl, string layerInfoJson) {
+			// Catch exceptions in caller
+
 			_dbConn = dbConn;
 			_name = name;
 			_featSvcUrl = featSvcUrl;
@@ -170,18 +173,15 @@ namespace QuickCapturePluginDatasource {
 			// TODO Assumption: field list will be the same for all features stored in the same feature service (virtual table)
 			var pluginFields = new List<PluginField>();
 			
-			foreach (DataColumn col in _table.Columns/*.Cast<DataColumn>()*/) {
+			foreach (DataColumn col in _table.Columns) {
 				// Most fields will be strings
 				FieldType fieldType = FieldType.String;
 
 				// Special rule for geometry, OID
-				//, timestamp fields
 				if (col.ColumnName.Equals(Properties.Settings.Default.FieldName_Shape, StringComparison.CurrentCultureIgnoreCase)) {
 					fieldType = FieldType.Geometry;
 				} else if (col.ColumnName.Equals(Properties.Settings.Default.FieldName_OID, StringComparison.CurrentCultureIgnoreCase)) {
 					fieldType = FieldType.OID;
-				//} else if (col.ColumnName == Properties.Settings.Default.FieldName_Timestamp) {
-				//	fieldType = FieldType.Date;
 				} else fieldType = DotNetTypeToPlugInFieldType(col.DataType);
 				pluginFields.Add(new PluginField() {
 					Name = col.ColumnName,
@@ -195,6 +195,8 @@ namespace QuickCapturePluginDatasource {
 
 			FieldType DotNetTypeToPlugInFieldType(Type dotNetType) {
 				// See for more info: http://desktop.arcgis.com/en/arcmap/latest/manage-data/geodatabases/arcgis-field-data-types.htm
+				// Here's the list of possibilities: https://pro.arcgis.com/en/pro-app/sdk/api-reference/#topic6820.html
+				// Per Ismael Chivite, this (plus OID and Geometry, handled elsewhere) are the only datatypes we need to worry about handling
 				if (dotNetType.Equals(typeof(Int16)))
 					return FieldType.SmallInteger;
 				else if (dotNetType.Equals(typeof(Int32)))
@@ -205,7 +207,6 @@ namespace QuickCapturePluginDatasource {
 					return FieldType.Single;
 				else if (dotNetType.Equals(typeof(double)))
 					return FieldType.Double;
-				// TODO Find out what other types might come from the SQLite DB fields. Here's the list of possibilities: https://pro.arcgis.com/en/pro-app/sdk/api-reference/#topic6820.html
 				else return FieldType.String;
 			}
 		}
@@ -268,47 +269,87 @@ namespace QuickCapturePluginDatasource {
 		}
 		private void AddQuickCaptureColumns() {
 			// Add the columns we pulled from SQLite; the rest will come from the Feature data
-			// TODO Change ErrorMsg column to ErrorData, and add an InnerErrorMsg column for just the error text
 			DataColumn oid = new DataColumn(Properties.Settings.Default.FieldName_OID, typeof(Int32));
 			_table.Columns.Add(oid);
 			_table.PrimaryKey = new DataColumn[] { oid };
+			// TODO Handle the case where there are feature attributes with the same names as these 4 app-defined fields:
 			_table.Columns.Add(Properties.Settings.Default.FieldName_FeatureID, typeof(string));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_Timestamp, typeof(DateTime));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorMsg, typeof(string));
-			//_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorData_out, typeof(string));
 			DataColumn col = _table.Columns.Add(Properties.Settings.Default.FieldName_att_FileName, typeof(string));
 			col.Caption = Properties.Settings.Default.FieldAlias_att_FileName;
 		}
+		/// <summary>
+		/// Add columns from what's in the feature JSON data.
+		/// </summary>
+		/// <remarks>
+		/// Fields are defined in both the feature JSON and also the layerInfos JSON included in the archive.
+		/// Ideally, these will match up and feature attributes can be augmented with type info found in the layerInfos.
+		/// These may be disjoint to a degree, however, so the rules are:
+		/// 1. Any feature attribute fields without layerInfo data will be assumed to be string type
+		/// 2. Any fields mentioned in layerInfo but not found in feature attributes will be added, and their values left null
+		/// What we risk skipping:
+		/// * Aliases for ObjectID, Shape field - likely not important as long as we have the right values for display
+		/// </remarks>
+		/// <param name="sFeat"></param>
 		private void AddAttributeColumns(string sFeat) {
 			// Add a shape column
 			_table.Columns.Add(Properties.Settings.Default.FieldName_Shape, typeof(Byte[]));
 			// Now read through the feature attributes to get the rest of the columns
-			dynamic feature = JObject.Parse(sFeat);
-			dynamic attrs = feature.attributes;
-			// Add most of what's in the SQLite Features table, Feature field
-			foreach (dynamic attr in attrs) {				
-				Type type = typeof(string);
-				string fieldAlias = null;
-				string fieldName = attr.Name; object fieldVal = attr.Value;
-				// Use schema info, once available, to add columns of type other than string
-				foreach (dynamic field in _layerInfoJson["fields"]) {
-					if (field.name == fieldName) {
-						if (field.type == "esriFieldTypeOID" || field.type == "esriFieldTypeGeometry") continue; // Column should already exist for these
-						type = ArcGISRestTypeToDotNetType(field.type);
-						fieldAlias = field.alias;
-					}
-				}
-				DataColumn col = _table.Columns.Add(CleanFieldName(fieldName), type);
-				if (!String.IsNullOrEmpty(fieldAlias)) col.Caption = fieldAlias;
+			dynamic feature = null;
+			try {
+				feature = JObject.Parse(sFeat);
+			} catch (Exception e) {
+				throw new Exception($"Couldn't parse the feature JSON data: {sFeat}", e);
 			}
-			// Add anything from layerInfo.json that wasn't in the SQLite feature attributes
-			foreach (dynamic field in _layerInfoJson["fields"]) {
-				string fieldName = CleanFieldName(field.name.ToString());
-				if (!_table.Columns.Contains(fieldName)) {
-					if (field.type == "esriFieldTypeOID" || field.type == "esriFieldTypeGeometry") continue; // Column should already exist for these
-					Type type = ArcGISRestTypeToDotNetType(field.type.ToString());
-					DataColumn col = _table.Columns.Add(fieldName, type);
-					col.Caption = field.alias;
+			dynamic attrs = null;
+			try {
+				attrs = feature.attributes;
+			} catch (Exception e) {
+				throw new Exception($"No attributes were found in this feature: {sFeat}", e);
+			}
+
+			// Try to get layerInfo metadata for more accurate field creation
+			IEnumerable<JToken> layerInfos = null; bool bLayerInfosAvailable = false;
+			try {
+				layerInfos = _layerInfoJson["fields"];
+			} finally { 
+				bLayerInfosAvailable = layerInfos != null && layerInfos.Count() > 0;
+			}
+			// Add most of what's in the SQLite Features table, Feature field
+			foreach (dynamic attr in attrs) {
+				Type type = typeof(string);
+				string fieldAlias = null; string fieldName = null; object fieldVal = null;
+				try {
+					fieldName = attr.Name; fieldVal = attr.Value;
+				} catch (Exception e) {
+					throw new Exception($"Couldn't get feature attribute name or value: {attr.ToString()}", e);
+				}
+
+				// Use schema info, if available, to add columns of type other than string
+				if (bLayerInfosAvailable) {
+					foreach (dynamic field in layerInfos) {
+						if (field.name == fieldName) {
+							if (field.type == "esriFieldTypeOID" || field.type == "esriFieldTypeGeometry") continue; // Column should already exist for these
+							type = ArcGISRestTypeToDotNetType(field.type);
+							fieldAlias = field.alias;
+						}
+					}
+				} // else type = typeof(string);
+			
+				DataColumn col = _table.Columns.Add(CleanFieldName(fieldName), type);
+				if (!string.IsNullOrEmpty(fieldAlias)) col.Caption = fieldAlias;
+			}
+			// Add anything from layerInfo JSON that wasn't in the SQLite feature attributes
+			if (bLayerInfosAvailable) {
+				foreach (dynamic field in layerInfos) {
+					string fieldName = CleanFieldName(field.name.ToString());
+					if (!_table.Columns.Contains(fieldName)) {
+						if (field.type == "esriFieldTypeOID" || field.type == "esriFieldTypeGeometry") continue; // Column should already exist for these
+						Type type = ArcGISRestTypeToDotNetType(field.type.ToString());
+						DataColumn col = _table.Columns.Add(fieldName, type);
+						col.Caption = field.alias;
+					}
 				}
 			}
 
@@ -426,7 +467,7 @@ namespace QuickCapturePluginDatasource {
 
 						DateTime? timestamp = null;
 						try {
-							long millis = Int64.Parse(reader[Properties.Settings.Default.FieldName_Timestamp].ToString());
+							double millis = double.Parse(reader[Properties.Settings.Default.FieldName_Timestamp].ToString());
 							timestamp = EPOCH_START.AddMilliseconds(millis);
 						} finally {
 							row[Properties.Settings.Default.FieldName_Timestamp] = timestamp;

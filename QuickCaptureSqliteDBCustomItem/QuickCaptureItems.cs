@@ -1,5 +1,6 @@
 ﻿using ArcGIS.Core.Data.PluginDatastore;
 using ArcGIS.Desktop.Core;
+using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Framework.Utilities;
 using ESRI.ArcGIS.ItemIndex;
@@ -10,7 +11,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -148,7 +148,6 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 		private readonly PluginDatastore _pluginDS = null;
 
 		public QuickCaptureVirtualTable(string name, string path, string type, PluginDatastore pluginws) : base(name, path, type) {
-			//this.Type = type; // TODO necessary?
 			this.DisplayType = "QuickCapture Virtual Table";
 			this.ContextMenuID = "QuickCaptureSqliteDBCustomItem_ContextMenu";
 			this._pluginDS = pluginws;

@@ -18,6 +18,7 @@
 */
 using ArcGIS.Core.Data;
 using ArcGIS.Core.Data.PluginDatastore;
+using ArcGIS.Desktop.Framework.Utilities;
 using Newtonsoft.Json.Linq;
 using QuickCapturePluginDatasource.Helpers;
 using System;
@@ -27,6 +28,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows;
 
 namespace QuickCapturePluginDatasource {
 	/// <summary>
@@ -53,25 +55,31 @@ namespace QuickCapturePluginDatasource {
 		/// .NET Clients access Open via the ArcGIS.Core.Data.PluginDatastore.PluginDatastore class
 		/// whereas Native clients (Pro internals) access via IWorkspaceFactory</remarks>
 		public override void Open(Uri connectionPath) {
-			if (!System.IO.File.Exists(connectionPath.LocalPath)) {
-				throw new System.IO.FileNotFoundException(connectionPath.LocalPath);
+			try {
+				if (!System.IO.File.Exists(connectionPath.LocalPath)) {
+					throw new System.IO.FileNotFoundException(connectionPath.LocalPath);
+				}
+				//initialize
+				//Strictly speaking, tracking your thread id is only necessary if
+				//your implementation uses internals that have thread affinity.
+				_thread_id = GetCurrentThreadId();
+
+				// The key is the table's display name, not its url
+				_tables = new Dictionary<string, VirtualTableInfo>();
+
+				// Get LayerInfos
+				_layerInfosDir = Path.Combine(Path.GetDirectoryName(connectionPath.LocalPath), Properties.Settings.Default.DirName_LayerInfos);
+				string connection = @"Read Only=True;Data Source=" + connectionPath.LocalPath;
+				_dbConn = new SQLiteConnection(connection);
+				_dbConn.Open();
+
+				// For QuickCapture, we'll create virtual tables based on what kind of geometry and features we find in the Feature records JSON
+				GetTableNames();
+			} catch (Exception e) {
+				string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
+				EventLog.Write(EventLog.EventType.Error, $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}: {sMsgs}");
+				MessageBox.Show("Error reading archive and tables: " + sMsgs);
 			}
-			//initialize
-			//Strictly speaking, tracking your thread id is only necessary if
-			//your implementation uses internals that have thread affinity.
-			_thread_id = GetCurrentThreadId();
-			
-			// The key is the table's display name, not its url
-			_tables = new Dictionary<string, VirtualTableInfo>();
-
-			// Get LayerInfos
-			_layerInfosDir = Path.Combine(Path.GetDirectoryName(connectionPath.LocalPath), Properties.Settings.Default.DirName_LayerInfos);
-			string connection = @"Read Only=True;Data Source=" + connectionPath.LocalPath;
-			_dbConn = new SQLiteConnection(connection);
-			_dbConn.Open();
-
-			// For QuickCapture, we'll create virtual tables based on what kind of geometry and features we find in the Feature records JSON
-			GetTableNames();
 		}
 
 		/// <summary>
@@ -87,7 +95,7 @@ namespace QuickCapturePluginDatasource {
 			try {
 				dynamic lyrInfo = JObject.Parse(sLyrInfoJson);
 				sTblName = lyrInfo.name.ToString();
-			} catch (Exception) { // Problem with JSON; divine the name another way
+			} catch (Exception) { // Problem with JSON; generate the table name another way
 				Uri uri = new Uri(sLyrUrl);
 				int iSegs = uri.Segments.Length;
 				string sLyrName1 = uri.Segments[iSegs - 3].EndsWith("/") ? uri.Segments[iSegs - 3].Substring(0, uri.Segments[iSegs - 3].Length - 1) : uri.Segments[iSegs - 3];
@@ -118,6 +126,8 @@ namespace QuickCapturePluginDatasource {
 		/// <param name="name">The name of the table to open</param>
 		/// <returns><see cref="PluginTableTemplate"/></returns>
 		public override PluginTableTemplate OpenTable(string name) {
+			// Catch exceptions in caller
+
 			//This is only necessary if your internals have thread affinity
 			//
 			//If you are using shared data (eg "static") it is your responsibility
@@ -130,7 +140,6 @@ namespace QuickCapturePluginDatasource {
 				throw new GeodatabaseTableException($"The table {name} was not found");
 			// Otherwise there's at least a partial VirtualTableInfo record there
 			if (_tables[name].Table == null) {
-				// TODO Assumption: all feature geometries are WGS84
 				_tables[name].Table = new ProPluginTableTemplate(_dbConn, name, _tables[name].FeatSvcUrl, _tables[name].LayerInfoJson);
 			}
 			return _tables[name].Table;
@@ -141,6 +150,8 @@ namespace QuickCapturePluginDatasource {
 		/// </summary>
 		/// <returns>IReadOnlyList{string}</returns>
 		public override IReadOnlyList<string> GetTableNames() {
+			// Catch exceptions in caller
+
 			// If we've already collected them, don't do it again
 			if (_tables.Count <= 0) {
 				List<string> tableNames = new List<string>();
