@@ -96,7 +96,7 @@ namespace QuickCapturePluginDatasource {
 				dynamic lyrInfo = JObject.Parse(sLyrInfoJson);
 				sTblName = lyrInfo.name.ToString();
 			} catch (Exception e) { // Problem with JSON; generate the table name another way
-				EventLog.Write(EventLog.EventType.Warning, "Could not get tablename from layerInfos; using alternate method.");
+				"Could not get tablename from layerInfos; using alternate method.".LogEvent(EventLog.EventType.Warning);
 				Uri uri = new Uri(sLyrUrl);
 				int iSegs = uri.Segments.Length;
 				string sLyrName1 = uri.Segments[iSegs - 3].EndsWith("/") ? uri.Segments[iSegs - 3].Substring(0, uri.Segments[iSegs - 3].Length - 1) : uri.Segments[iSegs - 3];
@@ -106,6 +106,9 @@ namespace QuickCapturePluginDatasource {
 			return sTblName;
 		}
 
+		/// <summary>
+		/// Cleanup code to run upon closing the datasource
+		/// </summary>
 		public override void Close() {
 			//Dispose of any cached table instances here
 			foreach (var table in _tables.Values) {

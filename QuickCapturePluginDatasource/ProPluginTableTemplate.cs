@@ -301,7 +301,7 @@ namespace QuickCapturePluginDatasource {
 			try {
 				feature = JObject.Parse(sFeat);
 			} catch (Exception e) {
-				EventLog.Write(EventLog.EventType.Error, $"AddAttributeColumns, parsing feature JSON: {string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message))}");
+				e.LogException("AddAttributeColumns, parsing feature JSON");
 				throw new Exception($"Couldn't parse the feature JSON data: {sFeat}", e);
 			}
 			dynamic attrs = null;

@@ -10,6 +10,7 @@ namespace QuickCapturePluginDatasource.Helpers {
 	/// Extensions to help with error logging
 	/// </summary>
 	public static class Extensions {
+		private static string EVENT_HEADING = "QuickCapture";
 		/// <summary>
 		/// Enumerate all nested exceptions
 		/// </summary>
@@ -35,7 +36,18 @@ namespace QuickCapturePluginDatasource.Helpers {
 		/// <param name="preamble">Text that will go into the log before the error strings</param>
 		/// <param name="eventType">Type of log entry to write: info, warning, error (defaults to error)</param>
 		public static void LogException(this Exception exc, string preamble, EventLog.EventType eventType = EventLog.EventType.Error) {
-			EventLog.Write(eventType, $"{preamble}: {string.Join(",\n", exc.GetInnerExceptions().Select(e => e.Message))}");
+			string sEvtText = $"{preamble}: {string.Join(",\n", exc.GetInnerExceptions().Select(e => e.Message))}";
+			sEvtText.LogEvent(eventType);
+		}
+
+		/// <summary>
+		/// Log info for diagnostic use, adding a standard preamble header to identify this plugin
+		/// </summary>
+		/// <param name="sEvtText">Text to go into the event log</param>
+		/// <param name="eventType">Type of log entry to write: info, warning, error (defaults to error)</param>
+		public static void LogEvent(this string sEvtText, EventLog.EventType eventType = EventLog.EventType.Error) {
+			string sEvtTextFull = EVENT_HEADING + ": " + sEvtText;
+			EventLog.Write(eventType, sEvtTextFull);
 		}
 	}
 }
