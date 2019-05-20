@@ -171,7 +171,7 @@ namespace QuickCapturePluginDatasource {
 		/// order of the fields specified from GetFields()</remarks>
 		/// <returns><see cref="IReadOnlyList{PluginField}"/></returns>
 		public override IReadOnlyList<PluginField> GetFields() {
-			// TODO Assumption: field list will be the same for all features stored in the same feature service (virtual table)
+			// Assumption: field list will be the same for all features stored in the same feature service (virtual table)
 			var pluginFields = new List<PluginField>();
 			
 			foreach (DataColumn col in _table.Columns) {
