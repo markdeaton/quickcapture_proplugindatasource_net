@@ -19,11 +19,9 @@
 using ArcGIS.Core.Data;
 using ArcGIS.Core.Data.PluginDatastore;
 using ArcGIS.Core.Geometry;
-using ArcGIS.Desktop.Framework.Utilities;
 using Newtonsoft.Json.Linq;
 using QuickCapturePluginDatasource.Helpers;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;

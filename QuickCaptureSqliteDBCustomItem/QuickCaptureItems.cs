@@ -1,13 +1,9 @@
-﻿using ArcGIS.Core;
-using ArcGIS.Core.CIM;
-using ArcGIS.Core.Data;
-using ArcGIS.Core.Data.PluginDatastore;
+﻿using ArcGIS.Core.Data.PluginDatastore;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Framework.Utilities;
-using ArcGIS.Desktop.Mapping;
 using ESRI.ArcGIS.ItemIndex;
 using QuickCapturePluginDatasource.Helpers;
 using System;
