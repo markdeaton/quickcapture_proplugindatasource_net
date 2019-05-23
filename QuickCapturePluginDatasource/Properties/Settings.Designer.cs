@@ -166,5 +166,14 @@ namespace QuickCapturePluginDatasource.Properties {
                 return ((string)(this["FieldAlias_att_FileName"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("QCRProcessingErrors")]
+        public string FieldName_QCRProcessingErrors {
+            get {
+                return ((string)(this["FieldName_QCRProcessingErrors"]));
+            }
+        }
     }
 }

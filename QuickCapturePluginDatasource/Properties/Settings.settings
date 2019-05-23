@@ -50,5 +50,8 @@
     <Setting Name="FieldAlias_att_FileName" Type="System.String" Scope="Application">
       <Value Profile="(Default)">Attachment FileName</Value>
     </Setting>
+    <Setting Name="FieldName_QCRProcessingErrors" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">QCRProcessingErrors</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

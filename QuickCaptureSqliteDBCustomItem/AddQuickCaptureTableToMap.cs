@@ -16,6 +16,11 @@ namespace QuickCaptureSqliteDBCustomItem.Buttons {
 		protected async override void OnClick() {
 			IProjectWindow catalog = Project.GetCatalogPane();
 			IEnumerable<Item> items = catalog.SelectedItems;
+			Map map = MapView.Active.Map;
+			if (map == null) {
+				map = MapFactory.Instance.CreateMap("QuickCapture Errors", ArcGIS.Core.CIM.MapType.Map, ArcGIS.Core.CIM.MapViewingMode.Map);
+				await ProApp.Panes.CreateMapPaneAsync(map);
+			}
 			ProgressorSource ps = new ProgressorSource("Adding tables to map...", true);
 			await QueuedTask.Run(() => {
 				IEnumerable<QuickCaptureVirtualTable> vts = items.OfType<QuickCaptureVirtualTable>();
@@ -24,7 +29,7 @@ namespace QuickCaptureSqliteDBCustomItem.Buttons {
 						try {
 							// TODO Assumption: QuickCapture errors will only have features, not table-only data
 							Table table = item.PluginDS.OpenTable(item.TableName);
-							LayerFactory.Instance.CreateFeatureLayer((FeatureClass)table, MapView.Active.Map);
+							LayerFactory.Instance.CreateFeatureLayer((FeatureClass)table, map);
 						} catch (Exception e) {
 							string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
 							EventLog.Write(EventLog.EventType.Error, $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}: {sMsgs}");

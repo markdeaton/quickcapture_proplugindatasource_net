@@ -141,7 +141,7 @@ namespace QuickCapturePluginDatasource {
 			try {
 				if (!this.GetTableNames().Contains(name)) throw new GeodatabaseTableException($"The table {name} was not found");
 			} catch (Exception e) {
-				e.LogException("Couldn't get table names");				;
+				e.LogException("Couldn't get table names");
 			}
 
 			// Otherwise there's at least a partial VirtualTableInfo record there

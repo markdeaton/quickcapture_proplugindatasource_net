@@ -126,7 +126,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 
 			foreach (string table in tables) {
 				// TODO Assumption: it's okay to have a null timestamp for catalog items
-				// TODO Get timestamp: 1) Implement ProPluginDatasourceTemplate::GetTSForTable(sTableName); 2) Cast pluginws to ProPluginDatasourceTemplate (?)
+				// Get timestamp: 1) Implement ProPluginDatasourceTemplate::GetTSForTable(sTableName); 2) Cast pluginws to ProPluginDatasourceTemplate (alas, this can't be done)
 				QuickCaptureVirtualTable vTbl = new QuickCaptureVirtualTable(table, $"{tempDBPath}[{table}]", "QuickCapture_VirtualTable", pluginws);
 				events.Add(vTbl);
 			}

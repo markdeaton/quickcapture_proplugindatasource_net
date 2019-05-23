@@ -277,6 +277,7 @@ namespace QuickCapturePluginDatasource {
 			_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorMsg, typeof(string));
 			DataColumn col = _table.Columns.Add(Properties.Settings.Default.FieldName_att_FileName, typeof(string));
 			col.Caption = Properties.Settings.Default.FieldAlias_att_FileName;
+			_table.Columns.Add(Properties.Settings.Default.FieldName_QCRProcessingErrors, typeof(string));
 		}
 		/// <summary>
 		/// Add columns from what's in the feature JSON data.
@@ -413,9 +414,6 @@ namespace QuickCapturePluginDatasource {
 			_extent = _sr_extent;
 		}
 
-		// Per Ismael, timestamps are in 1970 epoch milliseconds, UTC
-		private readonly DateTime EPOCH_START = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
 		private void Open() {
 			// Allow caller to handle exceptions
 			// Initialize our data table
@@ -451,7 +449,7 @@ namespace QuickCapturePluginDatasource {
 					row[Properties.Settings.Default.FieldName_FeatureID] = sFeatId;
 					string sErrorData = reader[Properties.Settings.Default.FieldName_ErrorMsg].ToString();
 					row[Properties.Settings.Default.FieldName_ErrorMsg] = sErrorData;
-					//row[Properties.Settings.Default.FieldName_ErrorMsg] = GetErrorMessage(sErrorData);
+
 					// It's not okay to skip a row with no data in Feature field; geometry will default to null if not set
 					if (sFeat.Length > 0) {
 						JObject feat = JObject.Parse(sFeat);
@@ -471,19 +469,15 @@ namespace QuickCapturePluginDatasource {
 						if (sAttachment.Length > 0)
 							row[Properties.Settings.Default.FieldName_att_FileName] = Path.Combine(_attachmentsDir, sAttachment);
 
-						DateTime? timestamp = null;
-						try {
-							double millis = double.Parse(reader[Properties.Settings.Default.FieldName_Timestamp].ToString());
-							timestamp = EPOCH_START.AddMilliseconds(millis);
-						} finally {
-							row[Properties.Settings.Default.FieldName_Timestamp] = timestamp;
-						}
+						DateTime? timestamp = millisToEpochDateTime(reader[Properties.Settings.Default.FieldName_Timestamp]);
+						if (timestamp != null) row[Properties.Settings.Default.FieldName_Timestamp] = timestamp;
+						else row[Properties.Settings.Default.FieldName_Timestamp] = DBNull.Value;
 						
 						// Shape
 						Geometry geom = BuildFeatureGeometry(sGeom);
 						RBush.Envelope envThisFeature = new RBush.Envelope(geom.Extent.XMin, geom.Extent.YMin, geom.Extent.XMax, geom.Extent.YMax);
 						if (!_sr_extent.Contains(envThisFeature))
-							throw new ArcGIS.Core.Data.GeodatabaseFeatureException(
+							throw new GeodatabaseFeatureException(
 							  $"Feature ID {sFeatId} falls outside the defined spatial reference ({_sr.Wkid})");
 						else {
 							// Add geometry to datarow
@@ -512,14 +506,30 @@ namespace QuickCapturePluginDatasource {
 						}
 
 						// Attributes
+						List<string> qcProcErrors = new List<string>();
 						JObject attrs = feat.Value<JObject>("attributes");
 						foreach (dynamic attr in attrs) {
 							string sFldName = CleanFieldName(attr.Key);
 							if (_table.Columns.Contains(sFldName)) {
-								row[sFldName] = attr.Value/*.ToString()*/;
+								// Special handling for date/time values
+								try {
+									if (_table.Columns[sFldName].DataType.Equals(typeof(DateTime))) {
+										DateTime dt = millisToEpochDateTime(attr.Value);
+										if (dt != null) row[sFldName] = dt;
+										else row[sFldName] = DBNull.Value;
+									} else { // numeric or string: just try to put the value into the field
+										row[sFldName] = attr.Value;
+									}
+								} catch (Exception exc) {
+									string sQcErr = $"{sFldName} (value = '{attr.Value}'): {string.Join(",\n", exc.GetInnerExceptions().Select(e => e.Message))}";
+									qcProcErrors.Add(sQcErr);
+								}
 							}
 						}
-
+						// Add any processing error messages
+						if (qcProcErrors.Count > 0) {
+							row[Properties.Settings.Default.FieldName_QCRProcessingErrors] = string.Join(";\n", qcProcErrors);
+						}
 					}
 					_table.Rows.Add(row);
 				}
@@ -537,6 +547,20 @@ namespace QuickCapturePluginDatasource {
 			//	}
 			//	return String.Join("; ", sErrs);
 			//}
+		}
+
+		/// <summary>
+		/// Utility function for use in reading data rows. Converts epoch millisecond values to .NET DateTime values.
+		/// </summary>
+		/// <param name="ms">Milliseconds since 1970, taken from input feature attribute data</param>
+		/// <returns>DateTime value corresponding to the given epoch milliseconds</returns>
+		private DateTime millisToEpochDateTime(object ms) {
+			// Per Ismael, timestamps are in 1970 epoch milliseconds, UTC
+			DateTime EPOCH_START = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+			double millis = double.Parse(ms.ToString());
+			DateTime dt = EPOCH_START.AddMilliseconds(millis);
+			return dt;							
 		}
 
 		private Geometry BuildFeatureGeometry(string sGeom) {
