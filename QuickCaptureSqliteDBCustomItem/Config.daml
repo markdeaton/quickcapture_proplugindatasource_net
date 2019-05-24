@@ -24,10 +24,13 @@
     when Pro is started. It is advisable to delete this file in-between sessions when you are 
     developing your custom item and refactoring your code, etc.-->
     <updateCategory refID="esri_customItems">
-      <insertComponent id="quickcapture_sqlite_handler" className="QuickCaptureSqliteDBCustomItem.Items.QuickCaptureDBItem" containerType="QuickCaptureContainer">
+      <insertComponent id="quickcapture_sqlite_handler" className="QuickCaptureSqliteDBCustomItem.Items.QuickCaptureDBItem">
         <content displayName="QuickCapture Errors" fileExtension="qcr" isContainer="true" keywords="quickcapture" />
       </insertComponent>
-      
+
+      <insertComponent id="quickcapture_virtual_table" className="QuickCaptureSqliteDBCustomItem.Items.QuickCaptureVirtualTable">
+        <content displayName="QuickCapture Error Layer" isContainer="true" keywords="quickcapture"/>
+      </insertComponent>
     </updateCategory>
   </categories>
   <modules>

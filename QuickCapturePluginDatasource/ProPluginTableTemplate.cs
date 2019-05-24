@@ -538,7 +538,7 @@ namespace QuickCapturePluginDatasource {
 					_rtree.BulkLoad(coordsToBulkAdd);
 				}
 			} catch (Exception e) {
-				e.LogException("TableTemplate.Open");
+				e.LogException("TableTemplate::Open");
 			}
 		}
 
@@ -569,7 +569,7 @@ namespace QuickCapturePluginDatasource {
 				oids = this.ExecuteQuery(qf);
 				columns = this.GetQuerySubFields(qf);
 			} catch (Exception e) {
-				e.LogException("Table::SearchInternal");
+				e.LogException("TableTemplate::SearchInternal");
 
 			}
 

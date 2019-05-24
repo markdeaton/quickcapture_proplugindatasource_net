@@ -1,9 +1,13 @@
-﻿using ArcGIS.Core.Data.PluginDatastore;
+﻿using ArcGIS.Core;
+using ArcGIS.Core.CIM;
+using ArcGIS.Core.Data;
+using ArcGIS.Core.Data.PluginDatastore;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Framework.Utilities;
+using ArcGIS.Desktop.Mapping;
 using ESRI.ArcGIS.ItemIndex;
 using QuickCapturePluginDatasource.Helpers;
 using System;
@@ -127,7 +131,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 			foreach (string table in tables) {
 				// TODO Assumption: it's okay to have a null timestamp for catalog items
 				// Get timestamp: 1) Implement ProPluginDatasourceTemplate::GetTSForTable(sTableName); 2) Cast pluginws to ProPluginDatasourceTemplate (alas, this can't be done)
-				QuickCaptureVirtualTable vTbl = new QuickCaptureVirtualTable(table, $"{tempDBPath}[{table}]", "QuickCapture_VirtualTable", pluginDs);
+				QuickCaptureVirtualTable vTbl = new QuickCaptureVirtualTable(table, $"{tempDBPath}[{table}]", "quickcapture_virtual_table", pluginDs);
 				events.Add(vTbl);
 			}
 
@@ -140,9 +144,13 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 	/// QuickCapture virtual tables (each is a feature service). These are children of a QuickCaptureDBItem
 	/// </summary>
 	/// <remarks>QuickCaptureVirtualTables are, themselves, custom items</remarks>
-	internal class QuickCaptureVirtualTable : CustomItemBase/*, IMappableItem*/ {
+	internal class QuickCaptureVirtualTable : CustomItemBase, IMappableItem {
 		private ImageSource largeIcon = null, smallIcon = null;
 		private readonly PluginDatastore _pluginDS = null;
+
+		//public QuickCaptureVirtualTable(ItemInfoValue iiv) : base(iiv) { // Never gets called
+		//	System.Diagnostics.Debug.WriteLine("QuickCaptureVirtualTable Ctor w/IIV");
+		//}
 
 		public QuickCaptureVirtualTable(string name, string path, string type, PluginDatastore pluginws) : base(name, path, type) {
 			this.DisplayType = "QuickCapture Virtual Table";
@@ -180,75 +188,75 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 		public string TableName { get => this.Name; }
 		public PluginDatastore PluginDS { get => _pluginDS; }
 
-		//#region IMappableItem implementation
+		#region IMappableItem implementation
 
-		//public bool CanAddToMap(MapType? mapType) {
-		//	return mapType != null;
-		//}
+		public bool CanAddToMap(MapType? mapType) {
+			return mapType != null;
+		}
 
-		//public void OnAddToMap(Map map) {
-		//	if (map == null)
-		//		return;
-		//	if (!QueuedTask.OnWorker)
-		//		throw new CalledOnWrongThreadException();
-		//	//var table = this.OpenTable();
-		//	//var extent = ((FeatureClass)table).GetExtent();
-		//	////use StandaloneTableFactory if your item is non-spatial
-		//	//LayerFactory.Instance.CreateFeatureLayer(table as FeatureClass, map);
-		//	//MapView.Active.ZoomTo(extent);
-		//	IProjectWindow catalog = Project.GetCatalogPane();
-		//	IEnumerable<Item> items = catalog.SelectedItems;
-		//	ProgressorSource ps = new ProgressorSource("Adding tables to map...", true);
-		//	QueuedTask.Run(() => {
-		//		IEnumerable<QuickCaptureVirtualTable> vts = items.OfType<QuickCaptureVirtualTable>();
-		//		foreach (QuickCaptureVirtualTable item in vts) {
-		//			if (item != null) {
-		//				try {
-		//					// TODO Assumption: QuickCapture errors will only have features, not table-only data
-		//					Table table = item.PluginDS.OpenTable(item.TableName);
-		//					LayerFactory.Instance.CreateFeatureLayer((FeatureClass)table, MapView.Active.Map);
-		//				} catch (Exception e) {
-		//					string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
-		//					e.LogException($"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}");
-		//					//EventLog.Write(EventLog.EventType.Error, : {sMsgs}");
-		//					MessageBox.Show("Error opening errors table: " + sMsgs);
-		//					System.Diagnostics.Debug.WriteLine($"Error opening table '{item.TableName}': {sMsgs}");
-		//				}
-		//			}
-		//		}
-		//	}, ps.Progressor);
-		//}
+		public void OnAddToMap(Map map) {
+			if (map == null)
+				return;
+			if (!QueuedTask.OnWorker)
+				throw new CalledOnWrongThreadException();
+			//var table = this.OpenTable();
+			//var extent = ((FeatureClass)table).GetExtent();
+			////use StandaloneTableFactory if your item is non-spatial
+			//LayerFactory.Instance.CreateFeatureLayer(table as FeatureClass, map);
+			//MapView.Active.ZoomTo(extent);
+			IProjectWindow catalog = Project.GetCatalogPane();
+			IEnumerable<Item> items = catalog.SelectedItems;
+			ProgressorSource ps = new ProgressorSource("Adding tables to map...", true);
+			QueuedTask.Run(() => {
+				IEnumerable<QuickCaptureVirtualTable> vts = items.OfType<QuickCaptureVirtualTable>();
+				foreach (QuickCaptureVirtualTable item in vts) {
+					if (item != null) {
+						try {
+							// TODO Assumption: QuickCapture errors will only have features, not table-only data
+							Table table = item.PluginDS.OpenTable(item.TableName);
+							LayerFactory.Instance.CreateFeatureLayer((FeatureClass)table, MapView.Active.Map);
+						} catch (Exception e) {
+							string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
+							e.LogException($"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}");
+							//EventLog.Write(EventLog.EventType.Error, : {sMsgs}");
+							MessageBox.Show("Error opening errors table: " + sMsgs);
+							System.Diagnostics.Debug.WriteLine($"Error opening table '{item.TableName}': {sMsgs}");
+						}
+					}
+				}
+			}, ps.Progressor);
+		}
 
-		//public void OnAddToMap(Map map, ILayerContainerEdit groupLayer, int index) {
-		//	if (!QueuedTask.OnWorker)
-		//		throw new CalledOnWrongThreadException();
-		//	//var table = this.OpenTable();
-		//	//var extent = ((FeatureClass)table).GetExtent();
-		//	//LayerFactory.Instance.CreateFeatureLayer(table as FeatureClass, groupLayer, index);
-		//	//MapView.Active.ZoomTo(extent);
-		//	IProjectWindow catalog = Project.GetCatalogPane();
-		//	IEnumerable<Item> items = catalog.SelectedItems;
-		//	ProgressorSource ps = new ProgressorSource("Adding tables to map...", true);
-		//	QueuedTask.Run(() => {
-		//		IEnumerable<QuickCaptureVirtualTable> vts = items.OfType<QuickCaptureVirtualTable>();
-		//		foreach (QuickCaptureVirtualTable item in vts) {
-		//			if (item != null) {
-		//				try {
-		//					// TODO Assumption: QuickCapture errors will only have features, not table-only data
-		//					Table table = item.PluginDS.OpenTable(item.TableName);
-		//					LayerFactory.Instance.CreateFeatureLayer((FeatureClass)table, MapView.Active.Map);
-		//				} catch (Exception e) {
-		//					string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
-		//					e.LogException($"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}");
-		//					//EventLog.Write(EventLog.EventType.Error, $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}: {sMsgs}");
-		//					MessageBox.Show("Error opening errors table: " + sMsgs);
-		//					System.Diagnostics.Debug.WriteLine($"Error opening table '{item.TableName}': {sMsgs}");
-		//				}
-		//			}
-		//		}
-		//	}, ps.Progressor);
-		//}
+		public void OnAddToMap(Map map, ILayerContainerEdit groupLayer, int index) {
+			if (!QueuedTask.OnWorker)
+				throw new CalledOnWrongThreadException();
+			//var table = this.OpenTable();
+			//var extent = ((FeatureClass)table).GetExtent();
+			//LayerFactory.Instance.CreateFeatureLayer(table as FeatureClass, groupLayer, index);
+			//MapView.Active.ZoomTo(extent);
+			IProjectWindow catalog = Project.GetCatalogPane();
+			IEnumerable<Item> items = catalog.SelectedItems;
+			ProgressorSource ps = new ProgressorSource("Adding tables to map...", true);
+			QueuedTask.Run(() => {
+				IEnumerable<QuickCaptureVirtualTable> vts = items.OfType<QuickCaptureVirtualTable>();
+				foreach (QuickCaptureVirtualTable item in vts) {
+					if (item != null) {
+						try {
+							// TODO Assumption: QuickCapture errors will only have features, not table-only data
+							Table table = item.PluginDS.OpenTable(item.TableName);
+							LayerFactory.Instance.CreateFeatureLayer((FeatureClass)table, MapView.Active.Map);
+						} catch (Exception e) {
+							string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
+							e.LogException($"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}");
+							//EventLog.Write(EventLog.EventType.Error, $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}: {sMsgs}");
+							MessageBox.Show("Error opening errors table: " + sMsgs);
+							System.Diagnostics.Debug.WriteLine($"Error opening table '{item.TableName}': {sMsgs}");
+						}
+					}
+				}
+			}, ps.Progressor);
+		}
 
-		//#endregion
+		#endregion
 	}
 }
