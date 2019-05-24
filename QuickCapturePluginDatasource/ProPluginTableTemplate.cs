@@ -54,10 +54,6 @@ namespace QuickCapturePluginDatasource {
 		/// </summary>
 		private readonly string _attachmentsDir;
 		/// <summary>
-		/// Directory holding the JSON files that define the layerinfo for the services from which the errors came
-		/// </summary>
-		//private readonly string _schemaDefnsDir;
-		/// <summary>
 		/// This plugin table represents all features that failed to get stored into a particular feature service
 		/// </summary>
 		private readonly string _featSvcUrl;
@@ -83,7 +79,11 @@ namespace QuickCapturePluginDatasource {
 			_rtree = new RBush.RBush<RBushCoord3D>();
 			//_sr = sr ?? SpatialReferences.WGS84;
 			// _sr set when we first GetGeometryTypeInfo() after we start reading records
-			_attachmentsDir = Path.Combine(Path.GetDirectoryName(_dbConn.FileName), Properties.Settings.Default.DirName_Attachments);
+			try {
+				_attachmentsDir = Path.Combine(Path.GetDirectoryName(_dbConn.FileName), Properties.Settings.Default.DirName_Attachments);
+			} catch (Exception e) {
+				e.LogException("While constructing attachments directory path");
+			}
 
 			Open();
 		}
@@ -415,138 +415,131 @@ namespace QuickCapturePluginDatasource {
 		}
 
 		private void Open() {
-			// Allow caller to handle exceptions
-			// Initialize our data table
-			_table = new DataTable();
-			AddQuickCaptureColumns(); // Add basic columns that should always exist
+			try {
+				// Allow caller to handle exceptions
+				// Initialize our data table
+				_table = new DataTable();
+				AddQuickCaptureColumns(); // Add basic columns that should always exist
 
-			//Read in the data
-			// TODO Assumption: SQLite Feature, FeatureId, Timestamp, ErrorMessage, FileName field names will always be the same
-			string sQryTable =
-				$"SELECT f.{Properties.Settings.Default.FieldName_OID}, f.{Properties.Settings.Default.FieldName_Feature}, "
-				+ $"f.{Properties.Settings.Default.FieldName_FeatureID}, f.{Properties.Settings.Default.FieldName_Timestamp}, "
-				+ $"f.{ Properties.Settings.Default.FieldName_ErrorMsg}, a.{Properties.Settings.Default.FieldName_att_FileName} "
-				+ $"FROM {Properties.Settings.Default.TableName_Features} AS f LEFT JOIN {Properties.Settings.Default.TableName_Attachments} AS a "
-				+ $"ON f.{Properties.Settings.Default.FieldName_FeatureID} = a.{Properties.Settings.Default.FieldName_att_FeatureID} "
-				+ $"WHERE f.{Properties.Settings.Default.FieldName_FeatureSvcLayer} = '{_featSvcUrl}' ";
+				//Read in the data
+				// TODO Assumption: SQLite Feature, FeatureId, Timestamp, ErrorMessage, FileName field names will always be the same
+				string sQryTable =
+					$"SELECT f.{Properties.Settings.Default.FieldName_OID}, f.{Properties.Settings.Default.FieldName_Feature}, "
+					+ $"f.{Properties.Settings.Default.FieldName_FeatureID}, f.{Properties.Settings.Default.FieldName_Timestamp}, "
+					+ $"f.{ Properties.Settings.Default.FieldName_ErrorMsg}, a.{Properties.Settings.Default.FieldName_att_FileName} "
+					+ $"FROM {Properties.Settings.Default.TableName_Features} AS f LEFT JOIN {Properties.Settings.Default.TableName_Attachments} AS a "
+					+ $"ON f.{Properties.Settings.Default.FieldName_FeatureID} = a.{Properties.Settings.Default.FieldName_att_FeatureID} "
+					+ $"WHERE f.{Properties.Settings.Default.FieldName_FeatureSvcLayer} = '{_featSvcUrl}' ";
 				//+ $"AND f.{Properties.Settings.Default.FieldName_Feature} IS NOT NULL ";
 
-			using (SQLiteCommand cmd = _dbConn.CreateCommand()) {
-				cmd.CommandText = sQryTable;
-				cmd.CommandType = CommandType.Text;
-				SQLiteDataReader reader = cmd.ExecuteReader();
-				List<RBushCoord3D> coordsToBulkAdd = new List<RBushCoord3D>();
-				while (reader.Read()) {
-					// Read data rows
-					DataRow row = _table.NewRow();
+				using (SQLiteCommand cmd = _dbConn.CreateCommand()) {
+					cmd.CommandText = sQryTable;
+					cmd.CommandType = CommandType.Text;
+					SQLiteDataReader reader = cmd.ExecuteReader();
+					List<RBushCoord3D> coordsToBulkAdd = new List<RBushCoord3D>();
+					while (reader.Read()) {
+						// Read data rows
+						DataRow row = _table.NewRow();
 
-					// Basic data that should always be there
-					string sFeat = reader[Properties.Settings.Default.FieldName_Feature].ToString();
-					string sFeatId = reader[Properties.Settings.Default.FieldName_FeatureID].ToString();
-					Int64 loid = (Int64)reader[Properties.Settings.Default.FieldName_OID];
-					Int32 oid = (Int32)loid;
-					row[Properties.Settings.Default.FieldName_OID] = oid;
-					row[Properties.Settings.Default.FieldName_FeatureID] = sFeatId;
-					string sErrorData = reader[Properties.Settings.Default.FieldName_ErrorMsg].ToString();
-					row[Properties.Settings.Default.FieldName_ErrorMsg] = sErrorData;
+						// Basic data that should always be there
+						string sFeat = reader[Properties.Settings.Default.FieldName_Feature].ToString();
+						string sFeatId = reader[Properties.Settings.Default.FieldName_FeatureID].ToString();
+						Int64 loid = (Int64)reader[Properties.Settings.Default.FieldName_OID];
+						Int32 oid = (Int32)loid;
+						row[Properties.Settings.Default.FieldName_OID] = oid;
+						row[Properties.Settings.Default.FieldName_FeatureID] = sFeatId;
+						string sErrorData = reader[Properties.Settings.Default.FieldName_ErrorMsg].ToString();
+						row[Properties.Settings.Default.FieldName_ErrorMsg] = sErrorData;
 
-					// It's not okay to skip a row with no data in Feature field; geometry will default to null if not set
-					if (sFeat.Length > 0) {
-						JObject feat = JObject.Parse(sFeat);
-						string sGeom = feat.Value<JObject>("geometry").ToString();
-						if (!_attributeColumnsAdded) { // Need to set up columns
-							AddAttributeColumns(sFeat);
-						}
-						if (_shapeType == GeometryType.Unknown) { 
-							// Also get basic info about the geometry: point/line/polygon, has z values, ...
-							GetGeometryTypeInfo(sFeatId, sGeom);
-						}
+						// It's not okay to skip a row with no data in Feature field; geometry will default to null if not set
+						if (sFeat.Length > 0) {
+							JObject feat = JObject.Parse(sFeat);
+							string sGeom = feat.Value<JObject>("geometry").ToString();
+							if (!_attributeColumnsAdded) { // Need to set up columns
+								AddAttributeColumns(sFeat);
+							}
+							if (_shapeType == GeometryType.Unknown) {
+								// Also get basic info about the geometry: point/line/polygon, has z values, ...
+								GetGeometryTypeInfo(sFeatId, sGeom);
+							}
 
-						// TODO Assumption: since ArcGIS treats oids as int32, there won't ever be so many SQLite (long) rowids that they can't be cast to int32s
-						// See http://desktop.arcgis.com/en/arcmap/latest/manage-data/databases/dbms-data-types-supported.htm#ESRI_SECTION1_E1310ADFB340464485BA2D2D167C9AE4
+							// TODO Assumption: since ArcGIS treats oids as int32, there won't ever be so many SQLite (long) rowids that they can't be cast to int32s
+							// See http://desktop.arcgis.com/en/arcmap/latest/manage-data/databases/dbms-data-types-supported.htm#ESRI_SECTION1_E1310ADFB340464485BA2D2D167C9AE4
 
-						string sAttachment = reader[Properties.Settings.Default.FieldName_att_FileName].ToString();
-						if (sAttachment.Length > 0)
-							row[Properties.Settings.Default.FieldName_att_FileName] = Path.Combine(_attachmentsDir, sAttachment);
+							string sAttachment = reader[Properties.Settings.Default.FieldName_att_FileName].ToString();
+							if (sAttachment.Length > 0)
+								row[Properties.Settings.Default.FieldName_att_FileName] = Path.Combine(_attachmentsDir, sAttachment);
 
-						DateTime? timestamp = millisToEpochDateTime(reader[Properties.Settings.Default.FieldName_Timestamp]);
-						if (timestamp != null) row[Properties.Settings.Default.FieldName_Timestamp] = timestamp;
-						else row[Properties.Settings.Default.FieldName_Timestamp] = DBNull.Value;
-						
-						// Shape
-						Geometry geom = BuildFeatureGeometry(sGeom);
-						RBush.Envelope envThisFeature = new RBush.Envelope(geom.Extent.XMin, geom.Extent.YMin, geom.Extent.XMax, geom.Extent.YMax);
-						if (!_sr_extent.Contains(envThisFeature))
-							throw new GeodatabaseFeatureException(
-							  $"Feature ID {sFeatId} falls outside the defined spatial reference ({_sr.Wkid})");
-						else {
-							// Add geometry to datarow
-							row[Properties.Settings.Default.FieldName_Shape] = geom.ToEsriShape();
-							// And add it to the list to add to the index
-							RBushCoord3D rbushCoord;
-							switch (geom.GeometryType) {
-								case GeometryType.Point:
-									rbushCoord = new RBushCoord3D(new Coordinate3D((MapPoint)geom), oid);
-									coordsToBulkAdd.Add(rbushCoord);
-									break;
-								case GeometryType.Polyline:
-								case GeometryType.Polygon:
-									foreach (MapPoint pt in ((Multipart)geom).Points) {
-										rbushCoord = new RBushCoord3D(new Coordinate3D(pt), oid);
+							DateTime? timestamp = MillisToEpochDateTime(reader[Properties.Settings.Default.FieldName_Timestamp]);
+							if (timestamp != null) row[Properties.Settings.Default.FieldName_Timestamp] = timestamp;
+							else row[Properties.Settings.Default.FieldName_Timestamp] = DBNull.Value;
+
+							// Shape
+							Geometry geom = BuildFeatureGeometry(sGeom);
+							RBush.Envelope envThisFeature = new RBush.Envelope(geom.Extent.XMin, geom.Extent.YMin, geom.Extent.XMax, geom.Extent.YMax);
+							if (!_sr_extent.Contains(envThisFeature))
+								throw new GeodatabaseFeatureException(
+								  $"Feature ID {sFeatId} falls outside the defined spatial reference ({_sr.Wkid})");
+							else {
+								// Add geometry to datarow
+								row[Properties.Settings.Default.FieldName_Shape] = geom.ToEsriShape();
+								// And add it to the list to add to the index
+								RBushCoord3D rbushCoord;
+								switch (geom.GeometryType) {
+									case GeometryType.Point:
+										rbushCoord = new RBushCoord3D(new Coordinate3D((MapPoint)geom), oid);
 										coordsToBulkAdd.Add(rbushCoord);
-									}
-									break;
-							}
-							// Update extent
-							if (_extent.Equals(_sr_extent)) {
-								_extent = envThisFeature;
-							} else {
-								_extent = _extent.Union2D(envThisFeature);
-							}
-						}
-
-						// Attributes
-						List<string> qcProcErrors = new List<string>();
-						JObject attrs = feat.Value<JObject>("attributes");
-						foreach (dynamic attr in attrs) {
-							string sFldName = CleanFieldName(attr.Key);
-							if (_table.Columns.Contains(sFldName)) {
-								// Special handling for date/time values
-								try {
-									if (_table.Columns[sFldName].DataType.Equals(typeof(DateTime))) {
-										DateTime dt = millisToEpochDateTime(attr.Value);
-										if (dt != null) row[sFldName] = dt;
-										else row[sFldName] = DBNull.Value;
-									} else { // numeric or string: just try to put the value into the field
-										row[sFldName] = attr.Value;
-									}
-								} catch (Exception exc) {
-									string sQcErr = $"{sFldName} (value = '{attr.Value}'): {string.Join(",\n", exc.GetInnerExceptions().Select(e => e.Message))}";
-									qcProcErrors.Add(sQcErr);
+										break;
+									case GeometryType.Polyline:
+									case GeometryType.Polygon:
+										foreach (MapPoint pt in ((Multipart)geom).Points) {
+											rbushCoord = new RBushCoord3D(new Coordinate3D(pt), oid);
+											coordsToBulkAdd.Add(rbushCoord);
+										}
+										break;
+								}
+								// Update extent
+								if (_extent.Equals(_sr_extent)) {
+									_extent = envThisFeature;
+								} else {
+									_extent = _extent.Union2D(envThisFeature);
 								}
 							}
-						}
-						// Add any processing error messages
-						if (qcProcErrors.Count > 0) {
-							row[Properties.Settings.Default.FieldName_QCRProcessingErrors] = string.Join(";\n", qcProcErrors);
-						}
-					}
-					_table.Rows.Add(row);
-				}
-				// Update spatial index
-				_rtree.BulkLoad(coordsToBulkAdd);
-			}
 
-			//string GetErrorMessage(string sErrorData) {
-			//	// Search through addResults array for error message
-			//	JObject jErrors = JObject.Parse(sErrorData);
-			//	List<string> sErrs = new List<string>();
-			//	foreach (JToken errTokn in jErrors.SelectTokens("$..error['message','description']")) { 
-			//		string sErr = errTokn.ToString(); // String.Join("; ", errs.ToArray());
-			//		sErrs.Add(sErr);
-			//	}
-			//	return String.Join("; ", sErrs);
-			//}
+							// Attributes
+							List<string> qcProcErrors = new List<string>();
+							JObject attrs = feat.Value<JObject>("attributes");
+							foreach (dynamic attr in attrs) {
+								string sFldName = CleanFieldName(attr.Key);
+								if (_table.Columns.Contains(sFldName)) {
+									// Special handling for date/time values
+									try {
+										if (_table.Columns[sFldName].DataType.Equals(typeof(DateTime))) {
+											DateTime dt = MillisToEpochDateTime(attr.Value);
+											if (dt != null) row[sFldName] = dt;
+											else row[sFldName] = DBNull.Value;
+										} else { // numeric or string: just try to put the value into the field
+											row[sFldName] = attr.Value;
+										}
+									} catch (Exception exc) {
+										string sQcErr = $"{sFldName} (value = '{attr.Value}'): {string.Join(",\n", exc.GetInnerExceptions().Select(e => e.Message))}";
+										qcProcErrors.Add(sQcErr);
+									}
+								}
+							}
+							// Add any processing error messages
+							if (qcProcErrors.Count > 0) {
+								row[Properties.Settings.Default.FieldName_QCRProcessingErrors] = string.Join(";\n", qcProcErrors);
+							}
+						}
+						_table.Rows.Add(row);
+					}
+					// Update spatial index
+					_rtree.BulkLoad(coordsToBulkAdd);
+				}
+			} catch (Exception e) {
+				e.LogException("TableTemplate.Open");
+			}
 		}
 
 		/// <summary>
@@ -554,7 +547,7 @@ namespace QuickCapturePluginDatasource {
 		/// </summary>
 		/// <param name="ms">Milliseconds since 1970, taken from input feature attribute data</param>
 		/// <returns>DateTime value corresponding to the given epoch milliseconds</returns>
-		private DateTime millisToEpochDateTime(object ms) {
+		private DateTime MillisToEpochDateTime(object ms) {
 			// Per Ismael, timestamps are in 1970 epoch milliseconds, UTC
 			DateTime EPOCH_START = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
@@ -570,8 +563,15 @@ namespace QuickCapturePluginDatasource {
 		}
 
 		private PluginCursorTemplate SearchInternal(QueryFilter qf) {
-			var oids = this.ExecuteQuery(qf);
-			var columns = this.GetQuerySubFields(qf);
+			IEnumerable<int> oids = null;
+			IEnumerable<string> columns = null;
+			try {
+				oids = this.ExecuteQuery(qf);
+				columns = this.GetQuerySubFields(qf);
+			} catch (Exception e) {
+				e.LogException("Table::SearchInternal");
+
+			}
 
 			return new ProPluginCursorTemplate(this,
 											oids,

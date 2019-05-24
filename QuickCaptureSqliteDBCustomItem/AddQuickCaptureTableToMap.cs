@@ -16,11 +16,13 @@ namespace QuickCaptureSqliteDBCustomItem.Buttons {
 		protected async override void OnClick() {
 			IProjectWindow catalog = Project.GetCatalogPane();
 			IEnumerable<Item> items = catalog.SelectedItems;
-			Map map = MapView.Active.Map;
-			if (map == null) {
+			Map map = null;
+			if (MapView.Active != null && MapView.Active.Map != null)
+				map = MapView.Active.Map;
+			else await QueuedTask.Run(() => { // If no map, add one just for this purpose
 				map = MapFactory.Instance.CreateMap("QuickCapture Errors", ArcGIS.Core.CIM.MapType.Map, ArcGIS.Core.CIM.MapViewingMode.Map);
-				await ProApp.Panes.CreateMapPaneAsync(map);
-			}
+				ProApp.Panes.CreateMapPaneAsync(map);
+			});
 			ProgressorSource ps = new ProgressorSource("Adding tables to map...", true);
 			await QueuedTask.Run(() => {
 				IEnumerable<QuickCaptureVirtualTable> vts = items.OfType<QuickCaptureVirtualTable>();

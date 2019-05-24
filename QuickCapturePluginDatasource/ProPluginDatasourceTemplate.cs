@@ -56,8 +56,8 @@ namespace QuickCapturePluginDatasource {
 		/// whereas Native clients (Pro internals) access via IWorkspaceFactory</remarks>
 		public override void Open(Uri connectionPath) {
 			try {
-				if (!System.IO.File.Exists(connectionPath.LocalPath)) {
-					throw new System.IO.FileNotFoundException(connectionPath.LocalPath);
+				if (!File.Exists(connectionPath.LocalPath)) {
+					throw new FileNotFoundException("Errors database not found at connectionPath.LocalPath");
 				}
 				//initialize
 				//Strictly speaking, tracking your thread id is only necessary if
@@ -86,7 +86,7 @@ namespace QuickCapturePluginDatasource {
 		/// Constructs a virtual table name from info in the supplied layerInfos file.
 		/// </summary>
 		/// <param name="sLyrUrl">The feature service URL</param>
-		/// <param name="sLyrInfosFilePath">Location of the layerInfos file for this service/virtual table</param>
+		/// <param name="sLyrInfoJson">Location of the layerInfos file for this service/virtual table</param>
 		/// <returns>Name of the virtual layer for these features</returns>
 		private string TableName(string sLyrUrl, string sLyrInfoJson) {
 			// Assumption: Open() is called before anything else, so this will always have access to the layerInfos for table name lookup
@@ -95,7 +95,7 @@ namespace QuickCapturePluginDatasource {
 			try {
 				dynamic lyrInfo = JObject.Parse(sLyrInfoJson);
 				sTblName = lyrInfo.name.ToString();
-			} catch (Exception e) { // Problem with JSON; generate the table name another way
+			} catch (Exception) { // Problem with JSON; generate the table name another way
 				"Could not get tablename from layerInfos; using alternate method.".LogEvent(EventLog.EventType.Warning);
 				Uri uri = new Uri(sLyrUrl);
 				int iSegs = uri.Segments.Length;

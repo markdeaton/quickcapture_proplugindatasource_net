@@ -92,7 +92,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 			IReadOnlyList<string> tables = new List<string>();
 			List<QuickCaptureVirtualTable> events = new List<QuickCaptureVirtualTable>();
 
-			PluginDatastore pluginws = null;
+			PluginDatastore pluginDs = null;
 
 			ProgressorSource ps = new ProgressorSource("Reading archive...", true);
 			await QueuedTask.Run(() => {
@@ -110,24 +110,24 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 					// Sqlite database path
 					tempDBPath = System.IO.Path.Combine(tempDir, "Errors.sqlite");
 
-					pluginws = new PluginDatastore(
+					pluginDs = new PluginDatastore(
 						 new PluginDatasourceConnectionPath("QuickCapture_Datasource",
 							   new Uri(tempDBPath, UriKind.Absolute)));
 					System.Diagnostics.Debug.Write("==========================\r\n");
 
-					tables = pluginws.GetTableNames().ToList();
+					tables = pluginDs.GetTableNames().ToList();
 				} catch (Exception e) {
 					string sMsgs = string.Join("\n", e.GetInnerExceptions().Select(exc => exc.Message));
 					EventLog.Write(EventLog.EventType.Error, $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}: {sMsgs}");
-					MessageBox.Show(FrameworkApplication.Current.MainWindow, "Error reading archive and tables: " + sMsgs);
-					pluginws?.Dispose();
+					MessageBox.Show("Error reading archive and tables: " + sMsgs);
+					pluginDs?.Dispose();
 				}
 			}, ps.Progressor);
 
 			foreach (string table in tables) {
 				// TODO Assumption: it's okay to have a null timestamp for catalog items
 				// Get timestamp: 1) Implement ProPluginDatasourceTemplate::GetTSForTable(sTableName); 2) Cast pluginws to ProPluginDatasourceTemplate (alas, this can't be done)
-				QuickCaptureVirtualTable vTbl = new QuickCaptureVirtualTable(table, $"{tempDBPath}[{table}]", "QuickCapture_VirtualTable", pluginws);
+				QuickCaptureVirtualTable vTbl = new QuickCaptureVirtualTable(table, $"{tempDBPath}[{table}]", "QuickCapture_VirtualTable", pluginDs);
 				events.Add(vTbl);
 			}
 
