@@ -164,7 +164,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 				if (largeIcon == null) {
 					BitmapImage bi3 = new BitmapImage();
 					bi3.BeginInit();
-					bi3.UriSource = new Uri("pack://application:,,,/ArcGIS.Desktop.Resources;component/Images/TableOpen32.png", UriKind.Absolute);
+					bi3.UriSource = new Uri("pack://application:,,,/ArcGIS.Desktop.Resources;component/Images/GeodatabaseFeatureClassPolygon16.png", UriKind.Absolute);
 					bi3.EndInit();
 					largeIcon = bi3 as ImageSource;
 				}
@@ -177,7 +177,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 				if (smallIcon == null) {
 					BitmapImage bi3 = new BitmapImage();
 					bi3.BeginInit();
-					bi3.UriSource = new Uri("pack://application:,,,/ArcGIS.Desktop.Resources;component/Images/TableOpen16.png", UriKind.Absolute);
+					bi3.UriSource = new Uri("pack://application:,,,/ArcGIS.Desktop.Resources;component/Images/GeodatabaseFeatureClassPolygon16.png", UriKind.Absolute);
 					bi3.EndInit();
 					smallIcon = bi3 as ImageSource;
 				}
