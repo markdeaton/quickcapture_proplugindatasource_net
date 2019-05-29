@@ -519,7 +519,8 @@ namespace QuickCapturePluginDatasource {
 											if (dt != null) row[sFldName] = dt;
 											else row[sFldName] = DBNull.Value;
 										} else { // numeric or string: just try to put the value into the field
-											row[sFldName] = attr.Value;
+											row[sFldName] = attr.Value != null ? attr.Value : DBNull.Value;
+											//row[sFldName] = attr.Value ?? DBNull.Value;
 										}
 									} catch (Exception exc) {
 										string sQcErr = $"{sFldName} (value = '{attr.Value}'): {string.Join(",\n", exc.GetInnerExceptions().Select(e => e.Message))}";
