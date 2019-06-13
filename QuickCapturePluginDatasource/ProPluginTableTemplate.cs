@@ -68,6 +68,8 @@ namespace QuickCapturePluginDatasource {
 		private bool _hasZ = false;
 
 		private bool _attributeColumnsAdded = false;
+		// This is where we map field names to their unique, nonconflicting replacements. If no conflict, an identity mapping should still be made and used.
+		private Dictionary<string, string> _fieldNameRemapping = new Dictionary<string, string>();
 
 		internal ProPluginTableTemplate(SQLiteConnection dbConn, string name, string featSvcUrl, string layerInfoJson) {
 			// Catch exceptions in caller
@@ -250,20 +252,31 @@ namespace QuickCapturePluginDatasource {
 
 		#region Private
 		/// <summary>
-		/// Change a JSON attribute name to conform to ArcGIS field-naming restrictions
+		/// Change a JSON attribute name to conform to ArcGIS field-naming restrictions and to ensure the field name is unique
 		/// </summary>
 		/// <param name="sTableName"></param>
 		/// <returns></returns>
-		private string CleanFieldName(string sTableName) {
+		private string UniqueAttributeFieldName(string sTableName) {
 			// see https://support.esri.com/en/technical-article/000005588
 			// see https://desktop.arcgis.com/en/arcmap/latest/manage-data/tables/fundamentals-of-adding-and-deleting-fields.htm#GUID-8E190093-8F8F-4132-AF4F-B0C9220F76B3
+			const int MAXLEN = 64;
 			string sCleanName = sTableName.Replace(" ", "_");
 			char first = sCleanName.First();
 			while (!char.IsLetterOrDigit(first) && first.ToString() != "_") {
 				sCleanName = sCleanName.Remove(0, 1);
 			}
 			// No longer than 64 chars
-			if (sCleanName.Length > 64) sCleanName = sCleanName.Substring(0, 64);
+			if (sCleanName.Length > MAXLEN) sCleanName = sCleanName.Substring(0, MAXLEN);
+
+			// Ensure the fieldname isn't already in the DataTable
+			string sCleanNameBase = sCleanName; int nSuffix = 1;
+			while (_table.Columns.Contains(sCleanName)) {
+				 string sSuffix = $"_{nSuffix++}";
+				int nUntruncatedLen = string.Concat(sCleanNameBase, sSuffix).Length;
+				int nCharsToTrim = Math.Max(0, nUntruncatedLen - MAXLEN);
+				sCleanName = sCleanNameBase.Substring(0, sCleanNameBase.Length - nCharsToTrim) + sSuffix;
+			}
+
 			return sCleanName;
 		}
 		private void AddQuickCaptureColumns() {
@@ -271,8 +284,10 @@ namespace QuickCapturePluginDatasource {
 			DataColumn oid = new DataColumn(Properties.Settings.Default.FieldName_OID, typeof(Int32));
 			_table.Columns.Add(oid);
 			_table.PrimaryKey = new DataColumn[] { oid };
-			// Don't need to worry about the case where there are feature attributes with the same names as these 4 app-defined fields.
-			// ArcGIS Pro handles field renaming for you.
+
+			// Add a shape column
+			_table.Columns.Add(Properties.Settings.Default.FieldName_Shape, typeof(Byte[]));
+
 			_table.Columns.Add(Properties.Settings.Default.FieldName_FeatureID, typeof(string));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_Timestamp, typeof(DateTime));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorMsg, typeof(string));
@@ -289,15 +304,14 @@ namespace QuickCapturePluginDatasource {
 		/// These may be disjoint to a degree, however, so the rules are:
 		/// 1. Any feature attribute fields without layerInfo data will be assumed to be string type
 		/// 2. Any fields mentioned in layerInfo but not found in feature attributes will be added, and their values left null
-		/// What we risk skipping:
-		/// * Aliases for ObjectID, Shape field - likely not important as long as we have the right values for display
+		/// 
+		/// Additionally, we need to make sure that field names are unique, or we'll get an exception on adding a duplicate field to the DataTable.
+		/// When doing so, we need to keep a map of original attribute field name to uniquely renamed field, so we can correctly assign values later.
 		/// </remarks>
 		/// <param name="sFeat"></param>
 		private void AddAttributeColumns(string sFeat) {
-			// Add a shape column
-			_table.Columns.Add(Properties.Settings.Default.FieldName_Shape, typeof(Byte[]));
-			// Now read through the feature attributes to get the rest of the columns
 			dynamic feature = null;
+
 			try {
 				feature = JObject.Parse(sFeat);
 			} catch (Exception e) {
@@ -313,48 +327,53 @@ namespace QuickCapturePluginDatasource {
 			}
 
 			// Try to get layerInfo metadata for more accurate field creation
-			IEnumerable<JToken> layerInfos = null; bool bLayerInfosAvailable = false;
+			JToken layerInfos = null; bool bLayerInfosAvailable = false;
 			try {
 				layerInfos = _layerInfoJson["fields"];
 			} catch (Exception e) {
-				e.LogException($"AddAttributeColumns--problem getting layerInfo fields");
+				e.LogException("AddAttributeColumns--problem getting layerInfo fields");
 				// No matching layerInfo field for feature attribute; we can recover by treating it as a string
 			} finally {
 				bLayerInfosAvailable = layerInfos != null && layerInfos.Count() > 0;
 			}
-			// Add most of what's in the SQLite Features table, Feature field
+			// First, add fields found in the SQLite Features table, Feature JSON
 			foreach (dynamic attr in attrs) {
 				Type type = typeof(string);
-				string fieldAlias = null; string fieldName = null; object fieldVal = null;
+				string fieldAlias = null; string inFieldName = null; object fieldVal = null;
 				try {
-					fieldName = attr.Name; fieldVal = attr.Value;
+					inFieldName = attr.Name; fieldVal = attr.Value;
 				} catch (Exception e) {
-					//e.LogException($"AddAttributeColumns--problem getting {fieldName} attribute name, value from '{attr.ToString()}'");
-					throw new Exception($"AddAttributeColumns--problem getting {fieldName} attribute (name, value) from '{attr.ToString()}'", e);
+					throw new Exception($"AddAttributeColumns--problem getting {inFieldName} attribute (name, value) from '{attr.ToString()}'", e);
 				}
+
+				// Need to worry about the case where there are feature attributes with the same names as the 7 app-defined fields.
 
 				// Use schema info, if available, to add columns of type other than string
 				if (bLayerInfosAvailable) {
-					foreach (dynamic field in layerInfos) {
-						if (field.name == fieldName) {
-							if (field.type == "esriFieldTypeOID" || field.type == "esriFieldTypeGeometry") continue; // Column should already exist for these
-							type = ArcGISRestTypeToDotNetType(field.type);
-							fieldAlias = field.alias;
-						}
+					JObject field = layerInfos.SelectToken($"$.[?(@.name == '{inFieldName}')]") as JObject;
+					if (field != null) {
+						if (field["type"].ToString() == "esriFieldTypeOID" || field["type"].ToString() == "esriFieldTypeGeometry") continue; // Column should already exist for these
+						type = ArcGISRestTypeToDotNetType(field["type"].ToString());
+						fieldAlias = field["alias"].ToString();
 					}
-				} // else type = typeof(string);
-			
-				DataColumn col = _table.Columns.Add(CleanFieldName(fieldName), type);
+				} // else type == typeof(string); (see above)
+
+				string outFieldName = UniqueAttributeFieldName(inFieldName);
+				_fieldNameRemapping.Add(inFieldName, outFieldName);
+				DataColumn col = _table.Columns.Add(outFieldName, type);
 				if (!string.IsNullOrEmpty(fieldAlias)) col.Caption = fieldAlias;
 			}
-			// Add anything from layerInfo JSON that wasn't in the SQLite feature attributes
+			// Next, add any fields from layerInfo JSON that weren't in the SQLite feature JSON
+			// Fieldnames must be ensured unique, even though there won't be any feature attribute data to put in them
 			if (bLayerInfosAvailable) {
 				foreach (dynamic field in layerInfos) {
-					string fieldName = CleanFieldName(field.name.ToString());
-					if (!_table.Columns.Contains(fieldName)) {
+					string inFieldName = field.name.ToString();
+					if (!_fieldNameRemapping.ContainsKey(inFieldName)) { // This attribute field hasn't been added yet
+					string outFieldName = UniqueAttributeFieldName(inFieldName);
+						_fieldNameRemapping.Add(inFieldName, outFieldName);
 						if (field.type == "esriFieldTypeOID" || field.type == "esriFieldTypeGeometry") continue; // Column should already exist for these
 						Type type = ArcGISRestTypeToDotNetType(field.type.ToString());
-						DataColumn col = _table.Columns.Add(fieldName, type);
+						DataColumn col = _table.Columns.Add(outFieldName, type);
 						col.Caption = field.alias;
 					}
 				}
@@ -431,7 +450,6 @@ namespace QuickCapturePluginDatasource {
 					+ $"FROM {Properties.Settings.Default.TableName_Features} AS f LEFT JOIN {Properties.Settings.Default.TableName_Attachments} AS a "
 					+ $"ON f.{Properties.Settings.Default.FieldName_FeatureID} = a.{Properties.Settings.Default.FieldName_att_FeatureID} "
 					+ $"WHERE f.{Properties.Settings.Default.FieldName_FeatureSvcLayer} = '{_featSvcUrl}' ";
-				//+ $"AND f.{Properties.Settings.Default.FieldName_Feature} IS NOT NULL ";
 
 				using (SQLiteCommand cmd = _dbConn.CreateCommand()) {
 					cmd.CommandText = sQryTable;
@@ -442,7 +460,8 @@ namespace QuickCapturePluginDatasource {
 						// Read data rows
 						DataRow row = _table.NewRow();
 
-						// Basic data that should always be there
+						// Basic data that should always be there:
+						// rowid, FeatureId, Timestamp, ErrorMessage, [Attachment]FileName, QCRProcessingErrors, Shape[Geometry]
 						string sFeat = reader[Properties.Settings.Default.FieldName_Feature].ToString();
 						string sFeatId = reader[Properties.Settings.Default.FieldName_FeatureID].ToString();
 						Int64 loid = (Int64)reader[Properties.Settings.Default.FieldName_OID];
@@ -507,11 +526,12 @@ namespace QuickCapturePluginDatasource {
 								}
 							}
 
-							// Attributes
+							// Attribute values
 							List<string> qcProcErrors = new List<string>();
 							JObject attrs = feat.Value<JObject>("attributes");
 							foreach (dynamic attr in attrs) {
-								string sFldName = CleanFieldName(attr.Key);
+								//string sFldName = UniqueAttributeFieldName(attr.Key);
+								string sFldName = _fieldNameRemapping[attr.Key];
 								if (_table.Columns.Contains(sFldName)) {
 									// Special handling for date/time values
 									try {
@@ -521,7 +541,6 @@ namespace QuickCapturePluginDatasource {
 											else row[sFldName] = DBNull.Value;
 										} else { // numeric or string: just try to put the value into the field
 											row[sFldName] = attr.Value != null ? attr.Value : DBNull.Value;
-											//row[sFldName] = attr.Value ?? DBNull.Value;
 										}
 									} catch (Exception exc) {
 										string sQcErr = $"{sFldName} (value = '{attr.Value}'): {string.Join(",\n", exc.GetInnerExceptions().Select(e => e.Message))}";
