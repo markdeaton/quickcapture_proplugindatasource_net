@@ -37,7 +37,7 @@ namespace QuickCapturePluginDatasource {
 		PluginRow FindRow(int oid, IEnumerable<string> columnFilter, SpatialReference sr);
 	}
 
-	// TODO Assumption: it's okay that any item added to Pro is in a temp location and won't be there if the Pro document is saved and later reopened
+	// N.B.: Any item added to Pro is in a temp location and won't be there if the Pro document is saved and later reopened
 
 	/// <summary>
 	/// Implements a plugin table.
@@ -271,7 +271,8 @@ namespace QuickCapturePluginDatasource {
 			DataColumn oid = new DataColumn(Properties.Settings.Default.FieldName_OID, typeof(Int32));
 			_table.Columns.Add(oid);
 			_table.PrimaryKey = new DataColumn[] { oid };
-			// TODO Handle the case where there are feature attributes with the same names as these 4 app-defined fields:
+			// Don't need to worry about the case where there are feature attributes with the same names as these 4 app-defined fields.
+			// ArcGIS Pro handles field renaming for you.
 			_table.Columns.Add(Properties.Settings.Default.FieldName_FeatureID, typeof(string));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_Timestamp, typeof(DateTime));
 			_table.Columns.Add(Properties.Settings.Default.FieldName_ErrorMsg, typeof(string));
@@ -422,7 +423,7 @@ namespace QuickCapturePluginDatasource {
 				AddQuickCaptureColumns(); // Add basic columns that should always exist
 
 				//Read in the data
-				// TODO Assumption: SQLite Feature, FeatureId, Timestamp, ErrorMessage, FileName field names will always be the same
+				// Assumption: SQLite Feature, FeatureId, Timestamp, ErrorMessage, FileName field names will always be the same
 				string sQryTable =
 					$"SELECT f.{Properties.Settings.Default.FieldName_OID}, f.{Properties.Settings.Default.FieldName_Feature}, "
 					+ $"f.{Properties.Settings.Default.FieldName_FeatureID}, f.{Properties.Settings.Default.FieldName_Timestamp}, "
@@ -463,7 +464,7 @@ namespace QuickCapturePluginDatasource {
 								GetGeometryTypeInfo(sFeatId, sGeom);
 							}
 
-							// TODO Assumption: since ArcGIS treats oids as int32, there won't ever be so many SQLite (long) rowids that they can't be cast to int32s
+							// Assumption: since ArcGIS treats oids as int32, there won't ever be so many SQLite (long) rowids that they can't be cast to int32s
 							// See http://desktop.arcgis.com/en/arcmap/latest/manage-data/databases/dbms-data-types-supported.htm#ESRI_SECTION1_E1310ADFB340464485BA2D2D167C9AE4
 
 							string sAttachment = reader[Properties.Settings.Default.FieldName_att_FileName].ToString();

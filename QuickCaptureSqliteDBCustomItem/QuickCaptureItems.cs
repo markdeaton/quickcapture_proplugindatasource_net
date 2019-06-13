@@ -146,8 +146,8 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 			}, ps.Progressor);
 
 			foreach (string table in tables) {
-				// TODO Assumption: it's okay to have a null timestamp for catalog items
-				// Get timestamp: 1) Implement ProPluginDatasourceTemplate::GetTSForTable(sTableName); 2) Cast pluginws to ProPluginDatasourceTemplate (alas, this can't be done)
+				// We'll always show a null timestamp for catalog items
+				// In order to get a timestamp: 1) Implement ProPluginDatasourceTemplate::GetTSForTable(sTableName); 2) Cast pluginws to ProPluginDatasourceTemplate (alas, this can't be done)
 				QuickCaptureVirtualTable vTbl = new QuickCaptureVirtualTable(table, $"{tempDBPath}[{table}]", "quickcapture_virtual_table", pluginDs);
 				events.Add(vTbl);
 			}
@@ -229,7 +229,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 				foreach (QuickCaptureVirtualTable item in vts) {
 					if (item != null) {
 						try {
-							// TODO Assumption: QuickCapture errors will only have features, not table-only data
+							// Assumption: QuickCapture errors will only have features with geometry, not table-only data
 							Table table = item.PluginDS.OpenTable(item.TableName);
 							LayerFactory.Instance.CreateFeatureLayer((FeatureClass)table, MapView.Active.Map);
 						} catch (Exception e) {
@@ -259,7 +259,7 @@ namespace QuickCaptureSqliteDBCustomItem.Items {
 				foreach (QuickCaptureVirtualTable item in vts) {
 					if (item != null) {
 						try {
-							// TODO Assumption: QuickCapture errors will only have features, not table-only data
+							// Assumption: QuickCapture errors will only have features, not table-only data
 							Table table = item.PluginDS.OpenTable(item.TableName);
 							LayerFactory.Instance.CreateFeatureLayer((FeatureClass)table, MapView.Active.Map);
 						} catch (Exception e) {

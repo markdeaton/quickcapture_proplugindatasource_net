@@ -163,9 +163,7 @@ namespace QuickCapturePluginDatasource {
 			// If we've already collected them, don't do it again
 			if (_tables.Count <= 0) {
 				List<string> tableNames = new List<string>();
-				// TODO Assumption: Feature data is always found in a table named "Features".
-				// TODO Get and use layerInfos to build table name here
-				// TODO Assumption: Archive has been completely extracted by this point
+				// Assumption: Archive has been completely extracted by this point
 				// Construct layerInfos path
 				// Open layerInfos file for this table
 				// Parse layerInfos 
