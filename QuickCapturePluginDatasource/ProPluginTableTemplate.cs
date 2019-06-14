@@ -368,7 +368,9 @@ namespace QuickCapturePluginDatasource {
 			if (bLayerInfosAvailable) {
 				foreach (dynamic field in layerInfos) {
 					string inFieldName = field.name.ToString();
-					if (!_fieldNameRemapping.ContainsKey(inFieldName)) { // This attribute field hasn't been added yet
+					if (!_fieldNameRemapping.ContainsKey(inFieldName)) {
+						// This attribute field hasn't been added yet. We check against _fieldNameRemapping
+						// instead of _table.Columns because _table.Columns are all processed, uniquified names.
 					string outFieldName = UniqueAttributeFieldName(inFieldName);
 						_fieldNameRemapping.Add(inFieldName, outFieldName);
 						if (field.type == "esriFieldTypeOID" || field.type == "esriFieldTypeGeometry") continue; // Column should already exist for these
