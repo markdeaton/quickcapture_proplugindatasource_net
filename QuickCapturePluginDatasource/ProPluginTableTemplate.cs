@@ -80,13 +80,9 @@ namespace QuickCapturePluginDatasource {
 			_layerInfoJson = JObject.Parse(layerInfoJson);
 			_rtree = new RBush.RBush<RBushCoord3D>();
 			//_sr = sr ?? SpatialReferences.WGS84;
-			// _sr set when we first GetGeometryTypeInfo() after we start reading records
-			try {
-				_attachmentsDir = Path.Combine(Path.GetDirectoryName(_dbConn.FileName), Properties.Settings.Default.DirName_Attachments);
-			} catch (Exception e) {
-				e.LogException("While constructing attachments directory path");
-			}
+			// _sr set when we first call GetGeometryTypeInfo() after we start reading records
 
+			_attachmentsDir = Path.Combine(Path.GetDirectoryName(_dbConn.FileName), Properties.Settings.Default.DirName_Attachments);
 			Open();
 		}
 
@@ -310,41 +306,21 @@ namespace QuickCapturePluginDatasource {
 		/// </remarks>
 		/// <param name="sFeat"></param>
 		private void AddAttributeColumns(string sFeat) {
-			dynamic feature = null;
-
-			try {
-				feature = JObject.Parse(sFeat);
-			} catch (Exception e) {
-				e.LogException("AddAttributeColumns, parsing feature JSON");
-				throw new Exception($"Couldn't parse the feature JSON data: {sFeat}", e);
-			}
-			dynamic attrs = null;
-			try {
-				attrs = feature.attributes;
-			} catch (Exception e) {
-				//e.LogException($"Couldn't read attributes for feature {sFeat}");
-				throw new Exception($"AddAttributeColumns--problem reading attributes for this feature: \"{sFeat}\"", e);
-			}
+			dynamic feature = JObject.Parse(sFeat);
+			dynamic attrs = feature.attributes;
 
 			// Try to get layerInfo metadata for more accurate field creation
 			JToken layerInfos = null; bool bLayerInfosAvailable = false;
-			try {
+			if (_layerInfoJson.ContainsKey("fields")) { 
 				layerInfos = _layerInfoJson["fields"];
-			} catch (Exception e) {
-				e.LogException("AddAttributeColumns--problem getting layerInfo fields");
-				// No matching layerInfo field for feature attribute; we can recover by treating it as a string
-			} finally {
-				bLayerInfosAvailable = layerInfos != null && layerInfos.Count() > 0;
 			}
+			bLayerInfosAvailable = layerInfos != null && layerInfos.Count() > 0;
+
 			// First, add fields found in the SQLite Features table, Feature JSON
 			foreach (dynamic attr in attrs) {
 				Type type = typeof(string);
 				string fieldAlias = null; string inFieldName = null; object fieldVal = null;
-				try {
-					inFieldName = attr.Name; fieldVal = attr.Value;
-				} catch (Exception e) {
-					throw new Exception($"AddAttributeColumns--problem getting {inFieldName} attribute (name, value) from '{attr.ToString()}'", e);
-				}
+				inFieldName = attr.Name; fieldVal = attr.Value;
 
 				// Need to worry about the case where there are feature attributes with the same names as the 7 app-defined fields.
 
@@ -410,7 +386,6 @@ namespace QuickCapturePluginDatasource {
 						break;
 				}
 				return type;
-
 			}
 		}
 		/// <summary>

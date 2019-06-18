@@ -138,17 +138,15 @@ namespace QuickCapturePluginDatasource {
 				throw new ArcGIS.Core.CalledOnWrongThreadException();
 			}
 
-			try {
-				if (!this.GetTableNames().Contains(name)) throw new GeodatabaseTableException($"The table {name} was not found");
-			} catch (Exception e) {
-				e.LogException("Couldn't get table names");
+			if (!this.GetTableNames().Contains(name)) {
+				// TODO This error's details don't propagate through to AddQuickCaptureTableToMap.OnClick(). How do we let the user know more about what really happened here?
+				throw new GeodatabaseTableException($"The table {name} was not found");
 			}
 
 			// Otherwise there's at least a partial VirtualTableInfo record there
-			if (_tables[name].Table == null) try {
-					_tables[name].Table = new ProPluginTableTemplate(_dbConn, name, _tables[name].FeatSvcUrl, _tables[name].LayerInfoJson);
-				} catch (Exception e) {
-					e.LogException($"Problem opening layer/table {name}");
+			if (_tables[name].Table == null) {
+				// See above TODO on error propagation
+				_tables[name].Table = new ProPluginTableTemplate(_dbConn, name, _tables[name].FeatSvcUrl, _tables[name].LayerInfoJson);
 				}
 			return _tables[name].Table;
 		}
@@ -191,7 +189,7 @@ namespace QuickCapturePluginDatasource {
 					}
 				}
 			}
-			if (_tables.Count <= 0) throw new Exception("No layers or tables could be read from the archive.");
+			if (_tables.Count <= 0) throw new InvalidOperationException("No layers or tables could be read from the archive.");
 			return _tables.Keys.ToList();
 		}
 
